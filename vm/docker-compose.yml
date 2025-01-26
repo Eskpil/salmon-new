@@ -1,0 +1,25 @@
+services:
+  etcd:
+    image: bitnami/etcd:latest
+    container_name: etcd-dev
+    environment:
+      - ETCD_NAME=etcd-dev
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://127.0.0.1:2379
+      - ETCD_INITIAL_CLUSTER=etcd-dev=http://127.0.0.1:2380
+      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-1
+      - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_INSECURE_CLIENT=true
+      - ETCD_INSECURE_TRANSPORT=true
+      - ALLOW_NONE_AUTHENTICATION=yes
+    ports:
+      - "2379:2379"  # Client communication
+      - "2380:2380"  # Peer communication
+    volumes:
+      - ./etcd-data:/etcd-data  # Mount a volume for persistence (optional for development)
+    restart: unless-stopped
+
+volumes:
+  etcd-data:
+    driver: local

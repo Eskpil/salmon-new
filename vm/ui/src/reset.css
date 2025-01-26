@@ -1,0 +1,70 @@
+/* Reset all styles */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: sans-serif; /* or any font of your choice */
+}
+
+ol,
+ul {
+    list-style: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+input,
+button,
+select,
+textarea {
+    font: inherit;
+    border: none;
+    outline: none;
+}
+
+/* Specific rules to reset some additional elements */
+hr {
+    border: none;
+}
+
+fieldset {
+    border: none;
+}
+
+legend {
+    display: none;
+}
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+nav,
+section,
+summary {
+    display: block;
+}
