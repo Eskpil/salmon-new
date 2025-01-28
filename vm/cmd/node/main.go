@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"os"
+	"runtime"
 
 	"github.com/eskpil/salmon/vm/internal/node/queries"
 	"github.com/eskpil/salmon/vm/nodeapi"
+	"github.com/eskpil/salmon/vm/pkg/uname"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -78,10 +81,24 @@ func (n Node) CreateVolume(ctx context.Context, req *nodeapi.CreateVolumeRequest
 
 func (n Node) Ping(ctx context.Context, req *nodeapi.PingRequest) (*nodeapi.PingResponse, error) {
 	res := new(nodeapi.PingResponse)
+	node := new(nodeapi.Node)
 
 	// TODO: Use live data
-	res.ActiveMachines = 2
-	res.TotalMachines = 10
+	node.ActiveMachines = 2
+	node.TotalMachines = 10
+
+	node.Topology = new(nodeapi.Topology)
+
+	// TODO: Do not do this, figure out memory
+	node.Topology.Cores = uint64(runtime.NumCPU()) / 2
+	node.Topology.Threads = 2
+
+	node.Hostname, _ = os.Hostname()
+
+	uname, _ := uname.New()
+	node.Kernel = fmt.Sprintf("%s %s %s", uname.Sysname(), uname.Machine(), uname.KernelRelease())
+
+	res.Node = node
 
 	return res, nil
 }

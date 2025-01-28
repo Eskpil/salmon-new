@@ -61,7 +61,7 @@ func (c *Client) resolveDomainDisks(machine *nodeapi.Machine, schema domain.Sche
 }
 
 func (c *Client) completeDomain(dom libvirt.Domain) (*nodeapi.Machine, error) {
-	_, maxmem, memory, cores, cputime, err := c.v.DomainGetInfo(dom)
+	_, _, memory, cores, _, err := c.v.DomainGetInfo(dom)
 	if err != nil {
 		return nil, err
 	}
@@ -83,13 +83,16 @@ func (c *Client) completeDomain(dom libvirt.Domain) (*nodeapi.Machine, error) {
 
 	machine := new(nodeapi.Machine)
 
+	topology := new(nodeapi.Topology)
+
+	topology.Cores = uint64(cores)
+	topology.Threads = uint64(1)
+	topology.Memory = memory
+
 	machine.Uuid = schema.UUID
 	machine.Schema = schemaJson
-	machine.Cputime = cputime
-	machine.MaxMem = maxmem
 	machine.Name = dom.Name
-	machine.Memory = memory
-	machine.Cores = uint64(cores)
+	machine.Topology = topology
 
 	c.resolveDomainInterfaces(machine, schema)
 	c.resolveDomainDisks(machine, schema)

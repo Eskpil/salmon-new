@@ -5,8 +5,8 @@ go 1.23.4
 require (
 	github.com/digitalocean/go-libvirt v0.0.0-20250124203551-ab4e783fc40f
 	github.com/google/uuid v1.6.0
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.13.3
+	go.etcd.io/etcd/client/v3 v3.5.18
 	go.etcd.io/etcd/server/v3 v3.5.18
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.4
@@ -19,7 +19,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -55,7 +54,6 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.18 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.18 // indirect
 	go.etcd.io/etcd/client/v2 v2.305.18 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.18 // indirect
 	go.etcd.io/etcd/pkg/v3 v3.5.18 // indirect
 	go.etcd.io/etcd/raft/v3 v3.5.18 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0 // indirect

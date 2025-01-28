@@ -36,6 +36,7 @@ type Features struct {
 }
 
 type Source struct {
+	Name     string         `xml:"name,omitempty"`
 	Auth     SourceAuth     `xml:"auth,omitempty"`
 	Host     SourceHost     `xml:"host,omitempty"`
 	Device   SourceDevice   `xml:"device,omitempty"`
@@ -63,11 +64,12 @@ type SourceDir struct {
 type SourceAuth struct {
 	Type     string             `xml:"type,attr"`
 	Username string             `xml:"username,attr"`
-	Secrets  []SourceAuthSecret `xml:"secrets"`
+	Secrets  []SourceAuthSecret `xml:"secret"`
 }
 
 type SourceAuthSecret struct {
 	Usage string `xml:"usage,attr"`
+	Uuid  string `xml:"uuid,attr"`
 }
 
 type SourceVendor struct {

@@ -34,8 +34,7 @@ message AttachInterfaceResponse {}
 
 message PingRequest {}
 message PingResponse {
-    uint64 active_machines = 1;
-    uint64 total_machines = 2;
+    Node node = 1;
 }
 
 service NodeApi {
@@ -52,6 +51,23 @@ service NodeApi {
     rpc ListNetworks(ListNetworksRequest) returns (NetworkList) {}
 }
 
+message Topology {
+    uint64 cores = 1;
+    uint64 threads = 2;
+    uint64 memory = 3;
+}
+
+message Node {
+    uint64 active_machines = 1;
+    uint64 total_machines = 2;
+
+    string hostname = 3;
+    string kernel = 4;
+    string uptime = 5;
+
+    Topology topology = 6;
+}
+
 message StoragePool {
     string name = 1;
     string uuid = 2;
@@ -61,6 +77,9 @@ message StoragePool {
     uint64 capacity = 5;
     uint64 available = 6;
     uint64 state = 7;
+
+    string kind = 8;
+    uint64 allocated = 9;
 }
 
 message StorageVolume {
@@ -127,13 +146,10 @@ message Machine {
     string uuid = 2;
     bytes schema = 3;
 
-    uint64 max_mem = 4;
-    uint64 memory = 5;
-    uint64 cores = 6;
-    uint64 cputime = 7;
+    Topology topology = 4;
 
-    repeated Interface interfaces = 8;
-    repeated Disk disks = 9;
+    repeated Interface interfaces = 5;
+    repeated Disk disks = 6;
 }
 
 message MachineList {

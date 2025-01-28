@@ -38,7 +38,7 @@ func listAllStoragePools(v *libvirt.Libvirt) ([]libvirt.StoragePool, error) {
 }
 
 func completeStoragePool(v *libvirt.Libvirt, pool libvirt.StoragePool) (*nodeapi.StoragePool, error) {
-	state, capacity, allocation, avaliable, err := v.StoragePoolGetInfo(pool)
+	state, capacity, allocated, avaliable, err := v.StoragePoolGetInfo(pool)
 	if err != nil {
 		return nil, err
 	}
@@ -60,11 +60,12 @@ func completeStoragePool(v *libvirt.Libvirt, pool libvirt.StoragePool) (*nodeapi
 
 	mapped := new(nodeapi.StoragePool)
 
+	mapped.Kind = string(schema.Type)
 	mapped.Uuid = schema.Uuid
 	mapped.Schema = schemaJson
-	mapped.AllocatedVolumes = allocation
 	mapped.State = uint64(state)
 	mapped.Capacity = capacity
+	mapped.Allocated = allocated
 	mapped.Available = avaliable
 	mapped.Name = pool.Name
 
@@ -132,11 +133,13 @@ func (c *Client) QueryStorageVolumes() ([]*nodeapi.StorageVolume, error) {
 	return c.volumes, nil
 }
 
-func (c *Client) preloadStorageVolumes(pool libvirt.StoragePool, uuid string) error {
-	v, err := completeVolumes(c.v, pool, uuid)
+func (c *Client) preloadStorageVolumes(pool *nodeapi.StoragePool, virtPool libvirt.StoragePool, uuid string) error {
+	v, err := completeVolumes(c.v, virtPool, uuid)
 	if err != nil {
 		return err
 	}
+
+	pool.AllocatedVolumes = uint64(len(v))
 
 	c.volumes = append(c.volumes, v...)
 
@@ -164,7 +167,7 @@ func (c *Client) preloadStorage() error {
 
 	for i, pool := range c.pools {
 		unmappedPool := unmappedPools[i]
-		if err := c.preloadStorageVolumes(unmappedPool, pool.GetUuid()); err != nil {
+		if err := c.preloadStorageVolumes(pool, unmappedPool, pool.GetUuid()); err != nil {
 			return err
 		}
 	}
@@ -189,6 +192,10 @@ func (c *Client) CreateVolume(poolUuid string, name string, format string, alloc
 
 	volume.Allocation.Unit = "bytes"
 	volume.Allocation.Value = allocation
+
+	// TODO: Just for testing
+	volume.Capacity.Unit = "bytes"
+	volume.Capacity.Value = allocation
 
 	volume.Target.Format.Type = format
 

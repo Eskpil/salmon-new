@@ -8,7 +8,9 @@ import (
 
 	"github.com/eskpil/salmon/vm/internal/controller/config"
 	"github.com/eskpil/salmon/vm/internal/controller/controllers/nodes"
-	"github.com/eskpil/salmon/vm/internal/controller/state"
+	"github.com/eskpil/salmon/vm/internal/controller/controllers/resource"
+	"github.com/eskpil/salmon/vm/internal/controller/cron"
+	"github.com/eskpil/salmon/vm/internal/controller/db"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"gopkg.in/yaml.v3"
@@ -56,25 +58,29 @@ func main() {
 
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
+		// TODO: Add clustering support
 		runDb("salmon_vm.etcd")
 		wg.Done()
 	}(wg)
 
-	config := readConfig()
-
-	s, err := state.New(config)
-	if err != nil {
-		panic(err)
-	}
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		cron.SyncWithNodes()
+		wg.Done()
+	}(wg)
 
 	server := echo.New()
 
+	server.Use(db.Middleware())
 	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
-	server.GET("/v1/nodes", nodes.List(s))
+	server.Use(db.Middleware())
+	server.POST("/v1/nodes", nodes.Create())
+
+	server.GET("/v1/resources", resource.List())
 
 	if err := server.Start("0.0.0.0:8080"); err != nil {
 		panic(err)

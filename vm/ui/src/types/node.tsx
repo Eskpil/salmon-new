@@ -1,7 +1,6 @@
 export interface Node {
-    name: string;
-    url: string;
-    active: boolean;
+    hostname: string;
+    kernel: string;
     active_machines: number;
     total_machines: number;
 }

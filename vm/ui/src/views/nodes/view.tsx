@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getNodes } from "../../data/queries/nodes";
-import { Badge, Box, Container, Table, Text } from "@radix-ui/themes";
-import { redirect } from "react-router";
+import { Badge, Box, Table, Text } from "@radix-ui/themes";
 import { useNavigate } from "react-router";
 
 export const NodesView: React.FC<{}> = () => {
@@ -13,48 +12,73 @@ export const NodesView: React.FC<{}> = () => {
     }
 
     return (
-        <Container p="30" pt="9">
-            <Table.Root>
-                <Table.Header>
-                    <Table.Row>
-                        <Table.ColumnHeaderCell></Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Url</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>
-                            Machines
-                        </Table.ColumnHeaderCell>
-                    </Table.Row>
-                </Table.Header>
+        <Box p="9">
+            <Text size="8">Nodes</Text>
+            <Box pt="3">
+                <Table.Root>
+                    <Table.Header>
+                        <Table.Row>
+                            <Table.ColumnHeaderCell></Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>
+                                Name
+                            </Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>Url</Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>
+                                Machines
+                            </Table.ColumnHeaderCell>
+                        </Table.Row>
+                    </Table.Header>
 
-                <Table.Body>
-                    {nodes.data?.list.map((node) => {
-                        return (
-                            <Table.Row
-                                key={node.name}
-                                onClick={() => {
-                                    console.log("redirecting");
+                    <Table.Body>
+                        {nodes.data?.list.map((node) => {
+                            const color = "green";
 
-                                    navigate(`/nodes/${node.name}`);
-                                }}
-                            >
-                                <Table.RowHeaderCell>
-                                    <Badge color="green">x</Badge>
-                                </Table.RowHeaderCell>
-                                <Table.RowHeaderCell>
-                                    {node.name}
-                                </Table.RowHeaderCell>
-                                <Table.Cell>{node.url}</Table.Cell>
-                                <Table.Cell>
-                                    <Badge color="green">
-                                        {node.active_machines}
-                                    </Badge>
-                                    /{node.total_machines}
-                                </Table.Cell>
-                            </Table.Row>
-                        );
-                    })}
-                </Table.Body>
-            </Table.Root>
-        </Container>
+                            const annotations = new Map();
+
+                            Object.entries(node.annotations!).forEach(
+                                (annotation) => {
+                                    annotations.set(
+                                        annotation[0],
+                                        annotation[1],
+                                    );
+                                },
+                            );
+
+                            const url = annotations.get("node.url")!;
+
+                            console.log(annotations);
+
+                            return (
+                                <Table.Row
+                                    key={node.spec!.name}
+                                    onClick={() => {
+                                        navigate(`/nodes/${node.id}`);
+                                    }}
+                                >
+                                    <Table.RowHeaderCell>
+                                        <Badge color={color as any}>
+                                            Connected
+                                        </Badge>
+                                    </Table.RowHeaderCell>
+                                    <Table.RowHeaderCell>
+                                        {node.spec!.hostname}
+                                    </Table.RowHeaderCell>
+                                    <Table.Cell>{url}</Table.Cell>
+                                    <Table.Cell>
+                                        <Badge color="green">
+                                            {node.spec!.active_machines}
+                                        </Badge>
+                                        /
+                                        <Badge color="purple">
+                                            {node.spec!.total_machines}
+                                        </Badge>
+                                    </Table.Cell>
+                                </Table.Row>
+                            );
+                        })}
+                    </Table.Body>
+                </Table.Root>
+            </Box>
+        </Box>
     );
 };
