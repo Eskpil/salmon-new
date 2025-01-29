@@ -74,12 +74,6 @@ func completeStoragePool(v *libvirt.Libvirt, pool libvirt.StoragePool) (*nodeapi
 
 func completeVolume(v *libvirt.Libvirt, unmappedVolume libvirt.StorageVol, poolUuid string) (*nodeapi.StorageVolume, error) {
 	mapped := new(nodeapi.StorageVolume)
-
-	_, capacity, allocation, err := v.StorageVolGetInfo(unmappedVolume)
-	if err != nil {
-		return nil, err
-	}
-
 	xmlSchema, err := v.StorageVolGetXMLDesc(unmappedVolume, 0)
 	if err != nil {
 		return nil, err
@@ -99,8 +93,8 @@ func completeVolume(v *libvirt.Libvirt, unmappedVolume libvirt.StorageVol, poolU
 	mapped.Pool = poolUuid
 	mapped.Name = unmappedVolume.Name
 	mapped.Key = unmappedVolume.Key
-	mapped.Capacity = capacity
-	mapped.Allocation = allocation
+	mapped.Capacity = uint64(schema.Capacity.Value)
+	mapped.Allocation = uint64(schema.Allocation.Value)
 
 	return mapped, nil
 }

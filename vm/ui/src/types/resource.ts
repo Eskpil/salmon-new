@@ -18,3 +18,11 @@ export interface Resource<T> {
     owner_ref: OwnerRef | undefined;
     spec: T | undefined;
 }
+
+// TODO: avoid using any
+export interface CreateResourceInput {
+    kind: string;
+    annotations: any;
+    owner_ref: OwnerRef | undefined;
+    spec: any;
+}

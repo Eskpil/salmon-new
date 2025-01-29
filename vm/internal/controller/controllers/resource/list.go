@@ -17,8 +17,8 @@ import (
 type ListFilter struct {
 	Kind      string `query:"kind"`
 	Id        string `query:"id"`
-	OwnerKind string `query:"owner_kind,omitempty"`
-	OwnerId   string `query:"owner_id,omitempty"`
+	OwnerKind string `query:"owner_kind"`
+	OwnerId   string `query:"owner_id"`
 }
 
 func List() echo.HandlerFunc {
@@ -41,6 +41,11 @@ func List() echo.HandlerFunc {
 			opts = append(opts, clientv3.WithPrefix())
 		}
 		path := fmt.Sprintf("%s/%s/%s", models.RootKey, filter.Kind, filter.Id)
+
+		// TODO: Avoid this hack
+		if filter.Kind == models.ResourceKindStorageVolume {
+			path = fmt.Sprintf("%s/%s/%s", models.RootKey, filter.Kind, filter.OwnerId)
+		}
 
 		res, err := db.Get(ctx, path, opts...)
 		if err != nil {

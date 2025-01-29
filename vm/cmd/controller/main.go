@@ -81,6 +81,7 @@ func main() {
 	server.POST("/v1/nodes", nodes.Create())
 
 	server.GET("/v1/resources", resource.List())
+	server.POST("v1/resources", resource.Create())
 
 	if err := server.Start("0.0.0.0:8080"); err != nil {
 		panic(err)

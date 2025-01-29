@@ -50,7 +50,7 @@ export const NodesView: React.FC<{}> = () => {
 
                             return (
                                 <Table.Row
-                                    key={node.spec!.name}
+                                    key={node.id}
                                     onClick={() => {
                                         navigate(`/nodes/${node.id}`);
                                     }}

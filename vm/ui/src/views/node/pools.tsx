@@ -44,7 +44,7 @@ export const PoolsView: React.FC<Props> = ({ id }) => {
                         <Table.Row
                             key={pool.id}
                             onClick={() => {
-                                navigate(`/pools/${pool.id}`);
+                                navigate(`/pools/${resource.id}`);
                             }}
                         >
                             <Table.RowHeaderCell>

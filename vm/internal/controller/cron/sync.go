@@ -147,7 +147,7 @@ func syncNodeStorage(ctx context.Context, api nodeapi.NodeApiClient, db *clientv
 		resource := new(models.Resource)
 
 		resource.Kind = models.ResourceKindNetwork
-		resource.Id = uuid.NewString()
+		resource.Id = pool.Uuid
 		resource.Owner = new(models.OwnerRef)
 		resource.Owner.Id = node.Id
 		resource.Owner.Kind = models.ResourceKindNode
