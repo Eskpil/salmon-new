@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/eskpil/salmon/vm/controllerapi"
+	"github.com/eskpil/salmon/vm/pkg/convert"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
 	"github.com/snorwin/jsonpatch"
 	"google.golang.org/grpc"
@@ -199,4 +200,31 @@ func (t *Transport) List(ctx context.Context, kind resource.ResourceKind, id str
 	}
 
 	return list, nil
+}
+
+func (t *Transport) Create(ctx context.Context, in *resource.Resource[any]) error {
+	api := t.C()
+
+	req := new(controllerapi.CreateRequest)
+
+	req.Kind = string(in.Kind)
+	req.Annotations = in.Annotations
+
+	if in.Owner != nil {
+		req.Owner = new(controllerapi.Owner)
+		req.Owner.Id = in.Owner.Id
+		req.Owner.Kind = in.Owner.Kind
+	}
+
+	spec, err := convert.Outgoing(&in.Spec)
+	if err != nil {
+		return err
+	}
+
+	req.Spec = spec
+	req.Status = new(controllerapi.Status)
+	req.Status.Phase = string(in.Status.Phase)
+
+	_, err = api.Create(ctx, req)
+	return err
 }

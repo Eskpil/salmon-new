@@ -8,7 +8,9 @@ import (
 
 	"github.com/eskpil/salmon/vm/controllerapi"
 	"github.com/eskpil/salmon/vm/internal/controller/models"
+	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
 	jsonpatch "github.com/evanphx/json-patch/v5"
+	"github.com/google/uuid"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -121,7 +123,6 @@ func (c Controller) Patch(ctx context.Context, req *controllerapi.PatchRequest) 
 	}
 
 	path := fmt.Sprintf("%s/%s/%s", models.RootKey, req.Kind, *req.Id)
-	fmt.Println(path)
 
 	res, err := c.Db.Get(ctx, path)
 	if err != nil {
@@ -151,4 +152,39 @@ func (c Controller) Patch(ctx context.Context, req *controllerapi.PatchRequest) 
 	}
 
 	return new(controllerapi.PatchResponse), nil
+}
+
+func (c Controller) Create(ctx context.Context, input *controllerapi.CreateRequest) (*controllerapi.CreateResponse, error) {
+	out := new(resource.Resource[any])
+
+	id := uuid.NewString()
+	if input.Kind == models.ResourceKindStorageVolume {
+		name := input.Spec.Fields["name"].GetStringValue()
+		id = fmt.Sprintf("%s/%s", input.Owner.Id, name)
+	}
+
+	out.Id = id
+	if input.Owner != nil {
+		out.Owner = new(resource.OwnerRef)
+		out.Owner.Id = input.Owner.Id
+		out.Owner.Kind = input.Owner.Kind
+	}
+	out.Kind = resource.ResourceKind(input.Kind)
+	out.Annotations = input.Annotations
+	out.Spec = input.Spec
+	out.Status.Phase = models.PhaseRequested
+
+	path := fmt.Sprintf("%s/%s/%s", models.RootKey, out.Kind, out.Id)
+
+	bytes, err := json.Marshal(out)
+	if err != nil {
+		panic(err)
+	}
+
+	if _, err := c.Db.Put(ctx, path, string(bytes)); err != nil {
+		fmt.Println("failed to insert resource", err)
+		return nil, status.Errorf(codes.Internal, "something wrong happend")
+	}
+
+	return new(controllerapi.CreateResponse), nil
 }

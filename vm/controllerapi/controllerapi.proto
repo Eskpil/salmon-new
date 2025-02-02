@@ -39,7 +39,11 @@ message PatchResponse {
 }
 
 message CreateRequest {
-    Resource resource = 1;
+    string kind = 1;
+    map<string, string> annotations = 2;
+    optional Owner owner = 3;
+    google.protobuf.Struct spec = 4;
+    Status status = 5;
 }
 
 message CreateResponse {

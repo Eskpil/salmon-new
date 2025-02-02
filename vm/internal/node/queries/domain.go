@@ -7,6 +7,7 @@ import (
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/eskpil/salmon/vm/nodeapi"
+	machinesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/machines"
 	"github.com/eskpil/salmon/vm/pkg/virtwrap/domain"
 )
 
@@ -118,4 +119,93 @@ func (c *Client) QueryMachines() ([]*nodeapi.Machine, error) {
 	}
 
 	return machines, nil
+}
+
+func (c *Client) CreateDomain(spec *machinesv1.Spec) error {
+	schema := new(domain.Schema)
+
+	schema.Name = spec.Name
+	schema.Type = "kvm"
+
+	schema.Memory.Unit = "bytes"
+	schema.Memory.Value = spec.Topology.Memory
+
+	schema.VCPU = new(domain.VCPU)
+	schema.VCPU.CPUs = uint32(spec.Topology.Cores) * uint32(spec.Topology.Threads)
+	schema.VCPU.Placement = "static"
+
+	schema.CPU.Topology = new(domain.CPUTopology)
+	schema.CPU.Topology.Cores = uint32(spec.Topology.Cores)
+	schema.CPU.Topology.Threads = uint32(spec.Topology.Threads)
+	schema.CPU.Topology.Sockets = 1
+	schema.CPU.Mode = "host-passthrough"
+
+	schema.Features = new(domain.Features)
+	schema.Features.ACPI = new(domain.FeatureEnabled)
+	schema.Features.APIC = new(domain.FeatureEnabled)
+
+	schema.Devices.Emulator = "/usr/bin/qemu-system-x86_64"
+
+	schema.OS.Type.Arch = "x86_64"
+	schema.OS.Type.Machine = "pc-q35-7.2"
+	schema.OS.Type.OS = "hvm"
+
+	for _, d := range spec.Disks {
+		disk := new(domain.Disk)
+
+		if d.Device == "cdrom" {
+			disk.Type = "file"
+			disk.Device = "cdrom"
+
+			disk.Source.File = d.Volume
+
+			disk.Driver = new(domain.DiskDriver)
+			disk.Driver.Name = "qemu"
+			disk.Driver.Type = "raw"
+
+			disk.Target.Device = "vda"
+			disk.Target.Bus = "sata"
+		}
+
+		schema.Devices.Disks = append(schema.Devices.Disks, *disk)
+	}
+
+	for _, i := range spec.Interfaces {
+		iface := new(domain.Interface)
+
+		iface.MAC = new(domain.MAC)
+		iface.MAC.MAC = i.Mac
+		iface.Type = "network"
+		iface.Source.Network = "bridged-network"
+		iface.Model = new(domain.Model)
+		iface.Model.Type = "virtio"
+
+		schema.Devices.Interfaces = append(schema.Devices.Interfaces, *iface)
+	}
+
+	vnc := new(domain.Graphics)
+
+	vnc.Type = "vnc"
+	vnc.AutoPort = "yes"
+	vnc.Passwd.Value = "123"
+	vnc.Listen = new(domain.GraphicsListen)
+
+	vnc.Listen.Type = "address"
+	vnc.Listen.Address = "0.0.0.0"
+
+	schema.Devices.Graphics = append(schema.Devices.Graphics, *vnc)
+
+	bytes, err := xml.Marshal(schema)
+	if err != nil {
+		panic(err)
+	}
+
+	returned, err := c.v.DomainCreateXML(string(bytes), 0)
+	if err != nil {
+		panic(err)
+	}
+
+	_ = returned
+
+	return nil
 }

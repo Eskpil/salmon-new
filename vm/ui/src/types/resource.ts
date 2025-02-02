@@ -4,11 +4,13 @@ export enum ResourceKind {
     StorageVolume = "storagevolume",
     Network = "network",
     Machine = "machine",
+    MachineRequest = "machinerequest",
 }
 
 export enum Phase {
     Requsted = "requested",
     Creating = "creating",
+    Errored = "errored",
     Created = "created",
 }
 

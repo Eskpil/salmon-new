@@ -5,11 +5,12 @@ import "google.golang.org/protobuf/types/known/structpb"
 type ResourceKind string
 
 const (
-	ResourceKindNode          = "node"
-	ResourceKindStoragePool   = "storagepool"
-	ResourceKindStorageVolume = "storagevolume"
-	ResourceKindNetwork       = "network"
-	ResourceKindMachine       = "machine"
+	ResourceKindNode           = "node"
+	ResourceKindStoragePool    = "storagepool"
+	ResourceKindStorageVolume  = "storagevolume"
+	ResourceKindNetwork        = "network"
+	ResourceKindMachine        = "machine"
+	ResourceKindMachineRequest = "machinerequest"
 )
 
 type Phase string

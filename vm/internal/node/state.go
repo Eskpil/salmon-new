@@ -40,7 +40,31 @@ func (s *State) Watch(ctx context.Context) error {
 		return err
 	}
 
+	if err := s.watchMachineRequests(ctx); err != nil {
+		return err
+	}
+
 	return s.t.Run(ctx)
+}
+
+func (s *State) watchMachineRequests(ctx context.Context) error {
+	go func() {
+		requests, err := s.Client.MachineRequests().List(ctx, "", nil)
+		if err != nil {
+			return
+		}
+
+		for _, req := range requests {
+			if req.Status.Phase == resource.PhaseRequested {
+				// TODO: Split this into multiple tasks
+				task := new(tasks.CreateVirtualMachineTask)
+				task.Request = req
+				s.t.AppendBound(task)
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (s *State) watchStorageVolumes(ctx context.Context) error {

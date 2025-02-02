@@ -1007,6 +1007,10 @@ type VideoModel struct {
 	VGAMem *uint  `xml:"vgamem,attr,omitempty"`
 }
 
+type Passwd struct {
+	Value string `xml:",chardata"`
+}
+
 type Graphics struct {
 	AutoPort      string          `xml:"autoport,attr,omitempty"`
 	DefaultMode   string          `xml:"defaultMode,attr,omitempty"`
@@ -1015,6 +1019,7 @@ type Graphics struct {
 	Port          int32           `xml:"port,attr,omitempty"`
 	TLSPort       int             `xml:"tlsPort,attr,omitempty"`
 	Type          string          `xml:"type,attr"`
+	Passwd        Passwd          `xml:"passwd,omitempty"`
 }
 
 type GraphicsListen struct {

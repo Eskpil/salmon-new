@@ -68,3 +68,7 @@ func (i *Interface) Watch(ctx context.Context, id string, owner *resource.OwnerR
 func (i *Interface) Patch(ctx context.Context, original *Self, modified *Self) error {
 	return i.t.Patch(ctx, original.Generic(), modified.Generic())
 }
+
+func (i *Interface) Create(ctx context.Context, in *Self) error {
+	return i.t.Create(ctx, in.Generic())
+}

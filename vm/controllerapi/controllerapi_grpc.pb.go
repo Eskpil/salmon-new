@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ControllerApi_Watch_FullMethodName = "/controllerapi.ControllerApi/Watch"
-	ControllerApi_List_FullMethodName  = "/controllerapi.ControllerApi/List"
-	ControllerApi_Patch_FullMethodName = "/controllerapi.ControllerApi/Patch"
+	ControllerApi_Watch_FullMethodName  = "/controllerapi.ControllerApi/Watch"
+	ControllerApi_List_FullMethodName   = "/controllerapi.ControllerApi/List"
+	ControllerApi_Create_FullMethodName = "/controllerapi.ControllerApi/Create"
+	ControllerApi_Patch_FullMethodName  = "/controllerapi.ControllerApi/Patch"
 )
 
 // ControllerApiClient is the client API for ControllerApi service.
@@ -30,6 +31,7 @@ const (
 type ControllerApiClient interface {
 	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchResponse], error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Patch(ctx context.Context, in *PatchRequest, opts ...grpc.CallOption) (*PatchResponse, error)
 }
 
@@ -70,6 +72,16 @@ func (c *controllerApiClient) List(ctx context.Context, in *ListRequest, opts ..
 	return out, nil
 }
 
+func (c *controllerApiClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateResponse)
+	err := c.cc.Invoke(ctx, ControllerApi_Create_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *controllerApiClient) Patch(ctx context.Context, in *PatchRequest, opts ...grpc.CallOption) (*PatchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PatchResponse)
@@ -86,6 +98,7 @@ func (c *controllerApiClient) Patch(ctx context.Context, in *PatchRequest, opts 
 type ControllerApiServer interface {
 	Watch(*WatchRequest, grpc.ServerStreamingServer[WatchResponse]) error
 	List(context.Context, *ListRequest) (*ListResponse, error)
+	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Patch(context.Context, *PatchRequest) (*PatchResponse, error)
 	mustEmbedUnimplementedControllerApiServer()
 }
@@ -102,6 +115,9 @@ func (UnimplementedControllerApiServer) Watch(*WatchRequest, grpc.ServerStreamin
 }
 func (UnimplementedControllerApiServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedControllerApiServer) Create(context.Context, *CreateRequest) (*CreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
 func (UnimplementedControllerApiServer) Patch(context.Context, *PatchRequest) (*PatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Patch not implemented")
@@ -156,6 +172,24 @@ func _ControllerApi_List_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControllerApi_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerApiServer).Create(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ControllerApi_Create_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerApiServer).Create(ctx, req.(*CreateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ControllerApi_Patch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PatchRequest)
 	if err := dec(in); err != nil {
@@ -184,6 +218,10 @@ var ControllerApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "List",
 			Handler:    _ControllerApi_List_Handler,
+		},
+		{
+			MethodName: "Create",
+			Handler:    _ControllerApi_Create_Handler,
 		},
 		{
 			MethodName: "Patch",

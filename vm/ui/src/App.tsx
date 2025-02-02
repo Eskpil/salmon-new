@@ -5,6 +5,7 @@ import "@radix-ui/themes/styles.css";
 import { Theme, Text } from "@radix-ui/themes";
 import { NodeView } from "./views/node/view";
 import { PoolView } from "./views/pool/view";
+import { CreateVmView } from "./views/vm/create";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,10 @@ function App() {
                     <Routes>
                         <Route index element={<NodesView />} />
                         <Route path="nodes/:id" element={<NodeView />} />
+                        <Route
+                            path="nodes/:id/create-vm"
+                            element={<CreateVmView />}
+                        />
                         <Route path="pools/:id" element={<PoolView />} />
                         <Route path="*" element={<Text>404 </Text>} />
                     </Routes>

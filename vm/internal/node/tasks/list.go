@@ -72,10 +72,10 @@ func (t *TaskList) Run(ctx context.Context) error {
 		case task := <-t.boundTasks:
 			{
 
-				if err := t.setResourcePhase(ctx, task.Resource(), resource.PhaseCreating, ""); err != nil {
-					fmt.Println("could not set resource phase", err)
-					continue
-				}
+				//if err := t.setResourcePhase(ctx, task.Resource(), resource.PhaseCreating, ""); err != nil {
+				//	fmt.Println("could not set resource phase", err)
+				//	continue
+				//}
 
 				if err := task.Execute(ctx, t.e); err != nil {
 					if err := t.setResourcePhase(ctx, task.Resource(), resource.PhaseErrored, err.Error()); err != nil {

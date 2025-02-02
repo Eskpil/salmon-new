@@ -1,12 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { Badge, Box, IconButton, Table } from "@radix-ui/themes";
+import { Badge, Box, Button, IconButton, Table } from "@radix-ui/themes";
 import { getMachines } from "../../data/queries/machines";
+import { useNavigate } from "react-router";
 
 interface Props {
     id: string;
 }
 
 export const VmsView: React.FC<Props> = ({ id }) => {
+    const navigate = useNavigate();
+
     const data = useQuery({
         queryKey: [id, `machines`],
         queryFn: () => getMachines(id),
@@ -19,6 +22,12 @@ export const VmsView: React.FC<Props> = ({ id }) => {
 
     return (
         <Box pt="3">
+            <Box>
+                <Button onClick={() => navigate(`/nodes/${id}/create-vm`)}>
+                    Create
+                </Button>
+            </Box>
+
             <Table.Root layout="auto">
                 <Table.Header>
                     <Table.Row>
