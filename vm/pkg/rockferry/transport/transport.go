@@ -185,8 +185,11 @@ func (t *Transport) List(ctx context.Context, kind resource.ResourceKind, id str
 
 		mapped.Id = unmapped.Id
 		mapped.Kind = resource.ResourceKind(unmapped.Kind)
-		mapped.Owner.Id = unmapped.Owner.Id
-		mapped.Owner.Kind = unmapped.Owner.Kind
+		if unmapped.Owner != nil {
+			mapped.Owner = new(resource.OwnerRef)
+			mapped.Owner.Id = unmapped.Owner.Id
+			mapped.Owner.Kind = unmapped.Owner.Kind
+		}
 		mapped.Annotations = unmapped.Annotations
 		mapped.Status.Phase = resource.Phase(unmapped.Status.Phase)
 		mapped.RawSpec = unmapped.GetSpec()
