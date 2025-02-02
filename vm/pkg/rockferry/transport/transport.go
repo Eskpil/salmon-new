@@ -133,7 +133,7 @@ func (t *Transport) Watch(ctx context.Context, kind resource.ResourceKind, id st
 	return out, nil
 }
 
-func (t *Transport) Update(ctx context.Context, original *resource.Resource[any], modified *resource.Resource[any]) error {
+func (t *Transport) Patch(ctx context.Context, original *resource.Resource[any], modified *resource.Resource[any]) error {
 	api := t.C()
 
 	patch, err := jsonpatch.CreateJSONPatch(modified, original)

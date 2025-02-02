@@ -35,7 +35,7 @@ func (t *CreateVolumeTask) Execute(ctx context.Context, executor *Executor) erro
 	*modified = *t.Volume
 	modified.Spec = updatedSpec
 
-	return executor.Rockferry.StorageVolumes().Update(ctx, t.Volume, modified)
+	return executor.Rockferry.StorageVolumes().Patch(ctx, t.Volume, modified)
 }
 
 func (t *CreateVolumeTask) Resource() *resource.Resource[any] {

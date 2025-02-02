@@ -7,8 +7,6 @@ import (
 	"github.com/eskpil/salmon/vm/internal/node/queries"
 	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
-
-	genericv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/generic"
 )
 
 type Executor struct {
@@ -55,7 +53,7 @@ func (t *TaskList) setResourcePhase(ctx context.Context, res *resource.Resource[
 		*copy.Status.Error = error
 	}
 
-	err := generic.Patch(ctx, genericv1.Self(*res), genericv1.Self(*copy))
+	err := generic.Patch(ctx, res, copy)
 	return err
 }
 
