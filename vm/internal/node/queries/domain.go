@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/digitalocean/go-libvirt"
-	"github.com/eskpil/salmon/vm/internal/node/virtwrap/domain"
 	"github.com/eskpil/salmon/vm/nodeapi"
+	"github.com/eskpil/salmon/vm/pkg/virtwrap/domain"
 )
 
 func (c *Client) listAllDomains() ([]libvirt.Domain, error) {

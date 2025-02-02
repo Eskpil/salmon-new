@@ -21,7 +21,7 @@ func main() {
 	req := new(nodeapi.CreateVolumeRequest)
 
 	req.Pool = "6ddb6928-dc10-44fc-b7a3-e4632b2eef76"
-	req.Name = "test-rdb123"
+	req.Name = "test-rdb1234324"
 	req.Format = "raw"
 	req.Allocation = 8 * 1024 * 1024
 

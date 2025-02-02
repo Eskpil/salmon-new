@@ -2,17 +2,22 @@ package main
 
 import (
 	"log"
+	"log/slog"
+	"net"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/eskpil/salmon/vm/controllerapi"
+	"github.com/eskpil/salmon/vm/internal/controller/api"
 	"github.com/eskpil/salmon/vm/internal/controller/config"
 	"github.com/eskpil/salmon/vm/internal/controller/controllers/nodes"
 	"github.com/eskpil/salmon/vm/internal/controller/controllers/resource"
-	"github.com/eskpil/salmon/vm/internal/controller/cron"
 	"github.com/eskpil/salmon/vm/internal/controller/db"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"gopkg.in/yaml.v3"
 
 	"go.etcd.io/etcd/server/v3/embed"
@@ -63,29 +68,55 @@ func main() {
 		wg.Done()
 	}(wg)
 
+	//wg.Add(1)
+	//go func(wg *sync.WaitGroup) {
+	//	cron.SyncWithNodes()
+	//	wg.Done()
+	//}(wg)
+
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
-		cron.SyncWithNodes()
-		wg.Done()
+		server := echo.New()
+
+		server.Use(db.Middleware())
+		server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: []string{"*"},
+			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		}))
+
+		server.Use(db.Middleware())
+		server.POST("/v1/nodes", nodes.Create())
+
+		server.GET("/v1/resources", resource.List())
+		server.POST("v1/resources", resource.Create())
+
+		if err := server.Start("0.0.0.0:8080"); err != nil {
+			panic(err)
+		}
 	}(wg)
 
-	server := echo.New()
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		listener, err := net.Listen("tcp", "0.0.0.0:9090")
+		if err != nil {
+			panic(err)
+		}
 
-	server.Use(db.Middleware())
-	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-	}))
+		api, err := api.New()
+		if err != nil {
+			panic(err)
+		}
 
-	server.Use(db.Middleware())
-	server.POST("/v1/nodes", nodes.Create())
+		server := grpc.NewServer()
+		controllerapi.RegisterControllerApiServer(server, api)
 
-	server.GET("/v1/resources", resource.List())
-	server.POST("v1/resources", resource.Create())
+		reflection.Register(server)
 
-	if err := server.Start("0.0.0.0:8080"); err != nil {
-		panic(err)
-	}
+		if err := server.Serve(listener); err != nil {
+			slog.Error("could not serve requests", slog.Any("err", err))
+		}
+
+	}(wg)
 
 	wg.Wait()
 }

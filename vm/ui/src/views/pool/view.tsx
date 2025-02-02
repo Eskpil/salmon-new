@@ -65,6 +65,7 @@ export const PoolView: React.FC<Props> = () => {
                                     spec: {
                                         name: values.name,
                                         capacity: values.capacity,
+                                        allocation: values.capacity,
                                     },
                                 };
 
@@ -129,7 +130,7 @@ export const PoolView: React.FC<Props> = () => {
                         <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
                         <Table.ColumnHeaderCell>Key</Table.ColumnHeaderCell>
                         <Table.ColumnHeaderCell>Usage</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Type</Table.ColumnHeaderCell>
+                        <Table.ColumnHeaderCell>Phase</Table.ColumnHeaderCell>
                     </Table.Row>
                 </Table.Header>
 
@@ -155,7 +156,9 @@ export const PoolView: React.FC<Props> = () => {
                                 <Badge color="purple">{capacity_gb} Gb</Badge>
                             </Table.Cell>
                             <Table.Cell>
-                                <Badge color="amber">{volume.type}</Badge>
+                                <Badge color="amber">
+                                    {resource.status.phase}
+                                </Badge>
                             </Table.Cell>
                         </Table.Row>
                     );

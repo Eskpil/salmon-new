@@ -35,18 +35,26 @@ func Create() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, common.MalformedInput())
 		}
 
+		// TODO: Owner is expected to be nil at some stage, for example
+		// 		 when trying to create a vm and you do not care where,
+		// 		 a node needs to be allocated for both volume creation
+		// 		 and the vm.
+
 		resource := new(models.Resource)
 
-		resource.Id = uuid.NewString()
+		id := uuid.NewString()
+		if input.Kind == models.ResourceKindStorageVolume {
+			id = fmt.Sprintf("%s/%s", input.OwnerRef.Id, input.Spec.(map[string]interface{})["name"].(string))
+		}
+
+		resource.Id = id
 		resource.Owner = input.OwnerRef
 		resource.Kind = string(input.Kind)
 		resource.Annotations = input.Annotations
 		resource.Spec = input.Spec
+		resource.Status.Phase = models.PhaseRequested
 
 		path := fmt.Sprintf("%s/%s/%s", models.RootKey, resource.Kind, resource.Id)
-		if resource.Kind == models.ResourceKindStorageVolume {
-			path = fmt.Sprintf("%s/%s/%s/%s", models.RootKey, resource.Kind, resource.Owner.Id, resource.Spec.(map[string]interface{})["name"].(string))
-		}
 
 		db := db.Extract(c)
 

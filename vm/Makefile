@@ -3,9 +3,15 @@
 PROTOC = protoc
 OUT_DIR = .
 
-.PHONY: all nodeapi clean
+.PHONY: all nodeapi controllerapi clean
 
 all: nodeapi
+
+	# Generate Go files from the .proto files
+controllerapi: $(PROTO_FILES)
+		$(PROTOC) --go_out=. --go_opt=paths=source_relative \
+		           --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+				   controllerapi/controllerapi.proto
 
 # Generate Go files from the .proto files
 nodeapi: $(PROTO_FILES)

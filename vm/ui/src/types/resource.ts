@@ -6,6 +6,12 @@ export enum ResourceKind {
     Machine = "machine",
 }
 
+export enum Phase {
+    Requsted = "requested",
+    Creating = "creating",
+    Created = "created",
+}
+
 export interface OwnerRef {
     kind: string;
     id: string;
@@ -17,6 +23,12 @@ export interface Resource<T> {
     annotations: Map<string, string> | undefined;
     owner_ref: OwnerRef | undefined;
     spec: T | undefined;
+    status: Status;
+}
+
+export interface Status {
+    phase: Phase;
+    error: string;
 }
 
 // TODO: avoid using any

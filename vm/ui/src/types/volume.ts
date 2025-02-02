@@ -1,6 +1,7 @@
 export interface Volume {
     name: string;
     pool: string;
+    format: string;
     schema: string;
 
     key: string;

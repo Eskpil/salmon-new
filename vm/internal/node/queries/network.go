@@ -5,8 +5,8 @@ import (
 	"encoding/xml"
 
 	"github.com/digitalocean/go-libvirt"
-	"github.com/eskpil/salmon/vm/internal/node/virtwrap/network"
 	"github.com/eskpil/salmon/vm/nodeapi"
+	"github.com/eskpil/salmon/vm/pkg/virtwrap/network"
 )
 
 func listAllNetworks(c *libvirt.Libvirt) ([]libvirt.Network, error) {

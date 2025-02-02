@@ -5,9 +5,10 @@ import (
 	"encoding/xml"
 
 	"github.com/digitalocean/go-libvirt"
-	"github.com/eskpil/salmon/vm/internal/node/virtwrap/storagepool"
-	"github.com/eskpil/salmon/vm/internal/node/virtwrap/storagevol"
 	"github.com/eskpil/salmon/vm/nodeapi"
+	storagevolumesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagevolumes"
+	"github.com/eskpil/salmon/vm/pkg/virtwrap/storagepool"
+	"github.com/eskpil/salmon/vm/pkg/virtwrap/storagevol"
 	"github.com/google/uuid"
 )
 
@@ -169,11 +170,12 @@ func (c *Client) preloadStorage() error {
 	return nil
 }
 
-func (c *Client) CreateVolume(poolUuid string, name string, format string, allocation int) error {
+func (c *Client) CreateVolume(poolUuid string, name string, format string, capacity uint64, allocation uint64) error {
 	t, err := c.findPoolByUuid(poolUuid)
 	if err != nil {
 		return err
 	}
+
 	pool, err := c.v.StoragePoolLookupByName(t.Name)
 	if err != nil {
 		return err
@@ -185,13 +187,16 @@ func (c *Client) CreateVolume(poolUuid string, name string, format string, alloc
 	volume.XMLName.Space = "volume"
 
 	volume.Allocation.Unit = "bytes"
-	volume.Allocation.Value = allocation
+	volume.Allocation.Value = int(allocation)
 
 	// TODO: Just for testing
 	volume.Capacity.Unit = "bytes"
-	volume.Capacity.Value = allocation
+	volume.Capacity.Value = int(capacity)
 
 	volume.Target.Format.Type = format
+
+	volume.Annotations = new(storagevol.Annotations)
+	volume.Annotations.Id = uuid.NewString()
 
 	volumeXML, err := xml.Marshal(volume)
 	if err != nil {
@@ -204,4 +209,40 @@ func (c *Client) CreateVolume(poolUuid string, name string, format string, alloc
 	}
 
 	return c.preloadStorage()
+}
+
+func (c *Client) QueryVolumeSpec(poolUuid string, name string) (*storagevolumesv1.Spec, error) {
+	t, err := c.findPoolByUuid(poolUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, err := c.v.StoragePoolLookupByName(t.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	vol, err := c.v.StorageVolLookupByName(pool, name)
+	if err != nil {
+		return nil, err
+	}
+
+	xmlDesc, err := c.v.StorageVolGetXMLDesc(vol, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	xmlSchema := new(storagevol.Schema)
+	if err := xml.Unmarshal([]byte(xmlDesc), xmlSchema); err != nil {
+		return nil, err
+	}
+
+	spec := new(storagevolumesv1.Spec)
+
+	spec.Key = xmlSchema.Key
+	spec.Name = xmlSchema.Name
+	spec.Allocation = uint64(xmlSchema.Allocation.Value)
+	spec.Capacity = uint64(xmlSchema.Capacity.Value)
+
+	return spec, nil
 }

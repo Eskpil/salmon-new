@@ -22,6 +22,7 @@ func NewClient() (*Client, error) {
 		return nil, err
 	}
 	client := &Client{v: l}
+
 	return client, client.preload()
 }
 
