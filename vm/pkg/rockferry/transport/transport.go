@@ -3,7 +3,6 @@ package transport
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/eskpil/salmon/vm/controllerapi"
@@ -15,7 +14,6 @@ import (
 )
 
 type Transport struct {
-	mutex  sync.Mutex
 	client controllerapi.ControllerApiClient
 }
 
@@ -35,18 +33,7 @@ func (t *Transport) C() controllerapi.ControllerApiClient {
 	return t.client
 }
 
-func (t *Transport) Lock() {
-	t.mutex.Lock()
-}
-
-func (t *Transport) Unlock() {
-	t.mutex.Unlock()
-}
-
 func (t *Transport) Watch(ctx context.Context, kind resource.ResourceKind, id string, owner *resource.OwnerRef) (chan *resource.Resource[interface{}], error) {
-	t.Lock()
-	defer t.Unlock()
-
 	api := t.C()
 
 	// Create the initial watch request
