@@ -24,7 +24,8 @@ const (
 
 // TODO: Add filtering, now all resources returned are those
 //
-//	who has the node as owner and status requested.
+//	who are newly changed or created. The client has to
+//	filter based on the Resource.Status.Phase
 type WatchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`

@@ -133,8 +133,6 @@ func (c *Client) QueryStoragePools() ([]*rockferry.StoragePool, error) {
 
 		res.Id = xmlSchema.Uuid
 		res.Owner = new(resource.OwnerRef)
-		// TODO: Do not hardcode this
-		res.Owner.Id = "de5f8daf-44c0-4e8f-9f32-e822260719c8"
 		res.Owner.Kind = resource.ResourceKindNode
 
 		res.Spec = *storagePoolSpec

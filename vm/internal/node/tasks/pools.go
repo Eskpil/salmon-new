@@ -17,6 +17,7 @@ func (t *SyncStoragePoolsTask) Execute(ctx context.Context, executor *Executor) 
 
 	client := executor.Rockferry.StoragePools()
 	for _, pool := range pools {
+		pool.Owner.Id = executor.NodeId
 		if err := client.Create(ctx, pool); err != nil {
 			return err
 		}

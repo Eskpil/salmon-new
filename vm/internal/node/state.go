@@ -80,7 +80,6 @@ func (s *State) watchMachineRequests(ctx context.Context) error {
 
 		for _, req := range requests {
 			if req.Status.Phase == resource.PhaseRequested {
-				// TODO: Split this into multiple tasks
 				task := new(tasks.CreateVirtualMachineTask)
 				task.Request = req
 				s.t.AppendBound(task)

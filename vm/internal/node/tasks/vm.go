@@ -16,8 +16,6 @@ type CreateVirtualMachineTask struct {
 }
 
 func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *Executor) ([]*spec.MachineSpecDisk, error) {
-	fmt.Println(t.Request.Spec)
-
 	disks := []*spec.MachineSpecDisk{}
 
 	for _, disk := range t.Request.Spec.Disks {
@@ -36,7 +34,7 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 		allocation := disk.Capacity
 
 		// TODO: Check if volume already is created and continue
-		if err := executor.Libvirt.CreateVolume(pool.Id, name, format, capacity, allocation); err != nil {
+		if err := executor.Libvirt.CreateVolume(pool.Spec.Name, name, format, capacity, allocation); err != nil {
 			return nil, err
 		}
 
@@ -149,7 +147,7 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 	res.Kind = resource.ResourceKindMachine
 	res.Owner = new(resource.OwnerRef)
 	// TODO: Do not hardcode this
-	res.Owner.Id = "de5f8daf-44c0-4e8f-9f32-e822260719c8"
+	res.Owner.Id = executor.NodeId
 	res.Owner.Kind = resource.ResourceKindNode
 
 	res.Status.Phase = resource.PhaseCreated
