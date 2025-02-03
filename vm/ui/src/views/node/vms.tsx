@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge, Box, Button, IconButton, Table } from "@radix-ui/themes";
 import { getMachines } from "../../data/queries/machines";
 import { useNavigate } from "react-router";
+import { convert, Units } from "../../utils/conversion";
 
 interface Props {
     id: string;
@@ -51,8 +52,10 @@ export const VmsView: React.FC<Props> = ({ id }) => {
                 {data.data?.list.map((resource) => {
                     const machine = resource.spec!;
 
-                    const memory_gb = Math.round(
-                        machine.topology.memory / 1_000_000,
+                    const memory = convert(
+                        machine.topology.memory,
+                        Units.Bytes,
+                        Units.Gigabyte,
                     );
 
                     return (
@@ -75,7 +78,7 @@ export const VmsView: React.FC<Props> = ({ id }) => {
                                 </Badge>
                             </Table.Cell>
                             <Table.Cell>
-                                <Badge color="purple">{memory_gb} Gb</Badge>
+                                <Badge color="purple">{memory} Gb</Badge>
                             </Table.Cell>
                             <Table.Cell>
                                 {machine.interfaces[0].mac} (

@@ -24,7 +24,7 @@ func New(c *config.Config) (*State, error) {
 		return nil, err
 	}
 
-	state.t, err = tasks.NewTaskList(client)
+	state.t, err = tasks.NewTaskList(client, c.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,17 @@ func (s *State) Watch(ctx context.Context) error {
 
 func (s *State) startupTasks() error {
 	{
+		task := new(tasks.SyncNodeTask)
+		s.t.AppendUnbound(task)
+	}
+
+	{
 		task := new(tasks.SyncStoragePoolsTask)
+		s.t.AppendUnbound(task)
+	}
+
+	{
+		task := new(tasks.SyncNetworksTask)
 		s.t.AppendUnbound(task)
 	}
 

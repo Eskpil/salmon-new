@@ -12,6 +12,8 @@ import (
 type Executor struct {
 	Libvirt   *queries.Client
 	Rockferry *rockferry.Client
+
+	NodeId string
 }
 
 type Task interface {
@@ -29,7 +31,7 @@ type TaskList struct {
 	unboundTasks chan Task
 }
 
-func NewTaskList(client *rockferry.Client) (*TaskList, error) {
+func NewTaskList(client *rockferry.Client, nodeId string) (*TaskList, error) {
 	var err error
 	list := new(TaskList)
 	list.unboundTasks = make(chan Task, 100)
@@ -38,6 +40,7 @@ func NewTaskList(client *rockferry.Client) (*TaskList, error) {
 
 	list.e.Libvirt, err = queries.NewClient()
 	list.e.Rockferry = client
+	list.e.NodeId = nodeId
 
 	return list, err
 }
