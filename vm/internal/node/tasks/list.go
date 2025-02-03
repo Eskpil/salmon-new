@@ -16,19 +16,24 @@ type Executor struct {
 
 type Task interface {
 	Execute(context.Context, *Executor) error
+}
+
+type BoundTask interface {
+	Execute(context.Context, *Executor) error
 	Resource() *resource.Resource[any]
 }
 
 type TaskList struct {
 	e            *Executor
-	boundTasks   chan Task
+	boundTasks   chan BoundTask
 	unboundTasks chan Task
 }
 
 func NewTaskList(client *rockferry.Client) (*TaskList, error) {
 	var err error
 	list := new(TaskList)
-	list.boundTasks = make(chan Task)
+	list.unboundTasks = make(chan Task, 100)
+	list.boundTasks = make(chan BoundTask, 100)
 	list.e = new(Executor)
 
 	list.e.Libvirt, err = queries.NewClient()
@@ -37,8 +42,12 @@ func NewTaskList(client *rockferry.Client) (*TaskList, error) {
 	return list, err
 }
 
-func (t *TaskList) AppendBound(task Task) {
+func (t *TaskList) AppendBound(task BoundTask) {
 	t.boundTasks <- task
+}
+
+func (t *TaskList) AppendUnbound(task Task) {
+	t.unboundTasks <- task
 }
 
 func (t *TaskList) setResourcePhase(ctx context.Context, res *resource.Resource[any], phase resource.Phase, error string) error {
@@ -63,19 +72,16 @@ func (t *TaskList) Run(ctx context.Context) error {
 		case task := <-t.unboundTasks:
 			{
 				if err := task.Execute(ctx, t.e); err != nil {
-					if err := t.setResourcePhase(ctx, task.Resource(), resource.PhaseErrored, err.Error()); err != nil {
-						fmt.Println("could not set resource phase", err)
-						continue
-					}
+					fmt.Println("failed to execute task", err)
 				}
 			}
 		case task := <-t.boundTasks:
 			{
 
-				//if err := t.setResourcePhase(ctx, task.Resource(), resource.PhaseCreating, ""); err != nil {
-				//	fmt.Println("could not set resource phase", err)
-				//	continue
-				//}
+				if err := t.setResourcePhase(ctx, task.Resource(), resource.PhaseCreating, ""); err != nil {
+					fmt.Println("could not set resource phase", err)
+					continue
+				}
 
 				if err := task.Execute(ctx, t.e); err != nil {
 					if err := t.setResourcePhase(ctx, task.Resource(), resource.PhaseErrored, err.Error()); err != nil {

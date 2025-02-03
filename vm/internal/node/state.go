@@ -36,6 +36,10 @@ func New() (*State, error) {
 func (s *State) Watch(ctx context.Context) error {
 	ctx = context.WithoutCancel(ctx)
 
+	if err := s.startupTasks(); err != nil {
+		return err
+	}
+
 	if err := s.watchStorageVolumes(ctx); err != nil {
 		return err
 	}
@@ -45,6 +49,15 @@ func (s *State) Watch(ctx context.Context) error {
 	}
 
 	return s.t.Run(ctx)
+}
+
+func (s *State) startupTasks() error {
+	{
+		task := new(tasks.SyncStoragePoolsTask)
+		s.t.AppendUnbound(task)
+	}
+
+	return nil
 }
 
 func (s *State) watchMachineRequests(ctx context.Context) error {
@@ -61,6 +74,22 @@ func (s *State) watchMachineRequests(ctx context.Context) error {
 				task.Request = req
 				s.t.AppendBound(task)
 			}
+		}
+
+		stream, err := s.Client.MachineRequests().Watch(ctx, "", nil)
+		if err != nil {
+			return
+		}
+
+		for {
+			req := <-stream
+
+			if req.Status.Phase == resource.PhaseRequested {
+				task := new(tasks.CreateVirtualMachineTask)
+				task.Request = req
+				s.t.AppendBound(task)
+			}
+
 		}
 	}()
 

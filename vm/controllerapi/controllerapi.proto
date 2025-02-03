@@ -39,11 +39,10 @@ message PatchResponse {
 }
 
 message CreateRequest {
-    string kind = 1;
-    map<string, string> annotations = 2;
-    optional Owner owner = 3;
-    google.protobuf.Struct spec = 4;
-    Status status = 5;
+    // This allows clients to fill in their own ids for example. And saves a lot of pain.
+    // The controller will only validate the resource, append neccesary fields if not set,
+    // such as id.
+    Resource resource = 1;
 }
 
 message CreateResponse {

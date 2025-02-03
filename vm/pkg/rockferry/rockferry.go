@@ -8,8 +8,13 @@ import (
 	machinesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/machines"
 	networksv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/networks"
 	nodesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/nodes"
+	storagepoolsv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagepools"
 	storagevolumesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagevolumes"
 )
+
+// TODO: Discover a solution with generics to align with DRY (do not repeat yourself) and KISS (keep it simple stupid)
+// 		 should be relativly simple, make Interface take a generic type for the Spec and pass in the resource kind as a
+// 		 argument.
 
 type Client struct {
 	c *controllerapi.ControllerApiClient
@@ -20,6 +25,7 @@ type Client struct {
 	machinesv1        *machinesv1.Interface
 	machinerequestsv1 *machinerequestsv1.Interface
 	networksv1        *networksv1.Interface
+	storagepoolsv1    *storagepoolsv1.Interface
 }
 
 func New() (*Client, error) {
@@ -35,6 +41,7 @@ func New() (*Client, error) {
 		machinesv1:        machinesv1.New(transport),
 		machinerequestsv1: machinerequestsv1.New(transport),
 		networksv1:        networksv1.New(transport),
+		storagepoolsv1:    storagepoolsv1.New(transport),
 	}, nil
 }
 
@@ -60,4 +67,8 @@ func (c *Client) MachineRequests() *machinerequestsv1.Interface {
 
 func (c *Client) Networks() *networksv1.Interface {
 	return c.networksv1
+}
+
+func (c *Client) StoragePools() *storagepoolsv1.Interface {
+	return c.storagepoolsv1
 }

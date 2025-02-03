@@ -150,21 +150,51 @@ func (c *Client) CreateDomain(spec *machinesv1.Spec) error {
 	schema.OS.Type.Machine = "pc-q35-7.2"
 	schema.OS.Type.OS = "hvm"
 
+	schema.OS.BootOrder = append(schema.OS.BootOrder, domain.Boot{Dev: "hd"})
+	schema.OS.BootOrder = append(schema.OS.BootOrder, domain.Boot{Dev: "cdrom"})
+
 	for _, d := range spec.Disks {
 		disk := new(domain.Disk)
 
-		if d.Device == "cdrom" {
-			disk.Type = "file"
-			disk.Device = "cdrom"
-
-			disk.Source.File = d.Volume
+		if d.Type == "network" {
+			disk.Type = "network"
+			disk.Device = d.Device
 
 			disk.Driver = new(domain.DiskDriver)
 			disk.Driver.Name = "qemu"
 			disk.Driver.Type = "raw"
 
+			disk.Auth = new(domain.DiskAuth)
+
+			disk.Auth.Username = d.Network.Auth.Username
+			disk.Auth.Secret = new(domain.DiskSecret)
+			disk.Auth.Secret.Type = d.Network.Auth.Type
+			disk.Auth.Secret.UUID = d.Network.Auth.Secret
+
+			disk.Source.Protocol = d.Network.Protocol
+			disk.Source.Name = d.Network.Key
+			disk.Source.Host = new(domain.DiskSourceHost)
+			disk.Source.Host.Name = d.Network.Hosts[0].Name
+			disk.Source.Host.Port = d.Network.Hosts[0].Port
+
+			disk.Target.Bus = "virtio"
+			// TODO: Create a function which returns unique device names
 			disk.Target.Device = "vda"
+		}
+
+		if d.Type == "file" {
+			disk.Type = "file"
+			disk.Device = d.Device
+
+			disk.Source.File = d.File.Key
+
+			disk.Driver = new(domain.DiskDriver)
+			disk.Driver.Name = "qemu"
+			disk.Driver.Type = "raw"
+
 			disk.Target.Bus = "sata"
+			disk.Target.Device = "sda"
+
 		}
 
 		schema.Devices.Disks = append(schema.Devices.Disks, *disk)

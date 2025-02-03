@@ -89,7 +89,7 @@ const VolumeSelect: React.FC<{
                 </Box>
                 <Select.Content>
                     <Select.Group>
-                        <Select.Label>Pools</Select.Label>
+                        <Select.Label>Volumes</Select.Label>
                         {data?.data?.list.map((resource) => {
                             const volume = resource!.spec;
 
@@ -204,8 +204,8 @@ export const CreateVmView: React.FC<{}> = () => {
                             const machine_request_spec: MachineRequest = {
                                 name: values.name,
                                 topology: {
-                                    cores: values.cores,
-                                    threads: values.threads,
+                                    cores: parseInt(values.cores as any),
+                                    threads: parseInt(values.threads as any),
                                     memory: convert(
                                         values.memory,
                                         Units.Gigabyte,

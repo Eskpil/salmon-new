@@ -19,10 +19,17 @@ type CreateVirtualMachineTask struct {
 func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *Executor) ([]*machinesv1.SpecDisk, error) {
 	fmt.Println(t.Request.Spec)
 
-	disks := make([]*machinesv1.SpecDisk, len(t.Request.Spec.Disks))
+	disks := []*machinesv1.SpecDisk{}
 
-	for i, disk := range t.Request.Spec.Disks {
-		pool := disk.Pool
+	for _, disk := range t.Request.Spec.Disks {
+		poolId := disk.Pool
+		pools, err := executor.Rockferry.StoragePools().List(ctx, poolId, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		pool := pools[0]
+
 		name := uuid.NewString()
 		format := "raw"
 
@@ -30,7 +37,7 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 		allocation := disk.Capacity
 
 		// TODO: Check if volume already is created and continue
-		if err := executor.Libvirt.CreateVolume(pool, name, format, capacity, allocation); err != nil {
+		if err := executor.Libvirt.CreateVolume(pool.Id, name, format, capacity, allocation); err != nil {
 			return nil, err
 		}
 
@@ -41,27 +48,52 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 
 		out := new(storagevolumesv1.Self)
 
+		out.Id = fmt.Sprintf("%s/%s", pool.Id, name)
 		out.Kind = resource.ResourceKindStorageVolume
 		out.Spec = spec
 		out.Status.Phase = resource.PhaseCreated
 		out.Owner = new(resource.OwnerRef)
-		out.Owner.Id = pool
+		out.Owner.Id = pool.Id
 		out.Owner.Kind = resource.ResourceKindStoragePool
 
 		if err := executor.Rockferry.StorageVolumes().Create(ctx, out); err != nil {
 			panic(err)
 		}
 
-		disks[i] = new(machinesv1.SpecDisk)
-		disks[i].Volume = spec.Key
-		disks[i].Device = "disk"
+		d := new(machinesv1.SpecDisk)
+		if pool.Spec.Type == "rbd" {
+			d.Type = "network"
+			d.Device = "disk"
+
+			d.Network = new(machinesv1.SpecDiskNetwork)
+			d.Network.Protocol = pool.Spec.Type
+			d.Network.Key = spec.Key
+			d.Network.Hosts = pool.Spec.Source.Hosts
+			d.Network.Auth = pool.Spec.Source.Auth
+			d.Network.Key = spec.Key
+		}
+
+		if pool.Spec.Type == "dir" {
+			d.Type = "file"
+			d.Device = "disk"
+
+			d.File = new(machinesv1.SpecDiskFile)
+			d.File.Key = spec.Key
+		}
+
+		disks = append(disks, d)
 	}
 
+	// TODO: CDROM can be network disk as well
+	cdrom := new(machinesv1.SpecDisk)
+
 	// This could probably be more clean
-	disks[len(disks)-1] = new(machinesv1.SpecDisk)
-	disks[len(disks)-1].Volume = t.Request.Spec.Cdrom.Key
-	disks[len(disks)-1].Device = "cdrom"
-	disks[len(disks)-1].Type = "file"
+	cdrom.File = new(machinesv1.SpecDiskFile)
+	cdrom.File.Key = t.Request.Spec.Cdrom.Key
+	cdrom.Device = "cdrom"
+	cdrom.Type = "file"
+
+	disks = append(disks, cdrom)
 
 	return disks, nil
 }
@@ -112,7 +144,25 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 	spec.Disks = disks
 	spec.Interfaces = interfaces
 
-	return executor.Libvirt.CreateDomain(spec)
+	res := new(machinesv1.Self)
+
+	res.Id = uuid.NewString()
+	res.Kind = resource.ResourceKindMachine
+	res.Owner = new(resource.OwnerRef)
+	// TODO: Do not hardcode this
+	res.Owner.Id = "de5f8daf-44c0-4e8f-9f32-e822260719c8"
+	res.Owner.Kind = resource.ResourceKindNode
+
+	res.Status.Phase = resource.PhaseCreated
+
+	if err := executor.Libvirt.CreateDomain(spec); err != nil {
+		return err
+	}
+
+	res.Spec = spec
+	res.Status.Phase = resource.PhaseCreated
+
+	return executor.Rockferry.Machines().Create(ctx, res)
 }
 
 func (t *CreateVirtualMachineTask) Resource() *resource.Resource[any] {

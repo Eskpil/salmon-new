@@ -1,6 +1,9 @@
 package machinesv1
 
-import "github.com/eskpil/salmon/vm/pkg/rockferry/resource"
+import (
+	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
+	storagepoolsv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagepools"
+)
 
 type SpecInterface struct {
 	Mac   string `json:"mac"`
@@ -10,12 +13,24 @@ type SpecInterface struct {
 	Bridge  *string `json:"bridge"`
 }
 
+type SpecDiskFile struct {
+	Key string `json:"key"`
+}
+
+type SpecDiskNetwork struct {
+	Hosts []*storagepoolsv1.SpecSourceHost `json:"hosts"`
+	Auth  *storagepoolsv1.SpecSourceAuth   `json:"auth"`
+
+	Protocol string `json:"type"`
+	Key      string `json:"key"`
+}
+
 type SpecDisk struct {
 	Device string `json:"device"`
 	Type   string `json:"type"`
 
-	// The volume key
-	Volume string `json:"volume"`
+	File    *SpecDiskFile    `json:"file,omitempty"`
+	Network *SpecDiskNetwork `json:"network,omitempty"`
 }
 
 type Spec struct {

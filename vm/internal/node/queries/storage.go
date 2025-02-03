@@ -6,6 +6,8 @@ import (
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/eskpil/salmon/vm/nodeapi"
+	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
+	storagepoolsv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagepools"
 	storagevolumesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagevolumes"
 	"github.com/eskpil/salmon/vm/pkg/virtwrap/storagepool"
 	"github.com/eskpil/salmon/vm/pkg/virtwrap/storagevol"
@@ -120,13 +122,13 @@ func completeVolumes(v *libvirt.Libvirt, pool libvirt.StoragePool, uuid string) 
 	return volumes, nil
 }
 
-func (c *Client) QueryStoragePools() ([]*nodeapi.StoragePool, error) {
-	return c.pools, nil
-}
-
-func (c *Client) QueryStorageVolumes() ([]*nodeapi.StorageVolume, error) {
-	return c.volumes, nil
-}
+//func (c *Client) QueryStoragePools() ([]*nodeapi.StoragePool, error) {
+//	return c.pools, nil
+//}
+//
+//func (c *Client) QueryStorageVolumes() ([]*nodeapi.StorageVolume, error) {
+//	return c.volumes, nil
+//}
 
 func (c *Client) preloadStorageVolumes(pool *nodeapi.StoragePool, virtPool libvirt.StoragePool, uuid string) error {
 	v, err := completeVolumes(c.v, virtPool, uuid)
@@ -245,4 +247,74 @@ func (c *Client) QueryVolumeSpec(poolUuid string, name string) (*storagevolumesv
 	spec.Capacity = uint64(xmlSchema.Capacity.Value)
 
 	return spec, nil
+}
+
+func (c *Client) QueryStoragePools() ([]*storagepoolsv1.Self, error) {
+	unmapped, _, err := c.v.ConnectListAllStoragePools(100, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	out := []*storagepoolsv1.Self{}
+
+	for _, u := range unmapped {
+		xmlDesc, err := c.v.StoragePoolGetXMLDesc(u, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		xmlSchema := new(storagepool.Schema)
+		if err := xml.Unmarshal([]byte(xmlDesc), xmlSchema); err != nil {
+			return nil, err
+		}
+
+		_, capacity, allocation, avaliable, err := c.v.StoragePoolGetInfo(u)
+		if err != nil {
+			return nil, err
+		}
+
+		spec := new(storagepoolsv1.Spec)
+		spec.Name = xmlSchema.Name
+
+		spec.Type = string(xmlSchema.Type)
+		spec.Allocation = allocation
+		spec.Capacity = capacity
+		spec.Available = avaliable
+
+		spec.Source = new(storagepoolsv1.SpecSource)
+
+		spec.Source.Name = xmlSchema.Source.Name
+
+		host := new(storagepoolsv1.SpecSourceHost)
+		host.Name = xmlSchema.Source.Host.Name
+		host.Port = xmlSchema.Source.Host.Port
+		spec.Source.Hosts = append(spec.Source.Hosts, host)
+
+		auth := new(storagepoolsv1.SpecSourceAuth)
+
+		if xmlSchema.Source.Auth.Type != "" {
+			auth.Type = xmlSchema.Source.Auth.Type
+			auth.Username = xmlSchema.Source.Auth.Username
+			auth.Secret = xmlSchema.Source.Auth.Secrets[0].Uuid
+
+			spec.Source.Auth = auth
+		}
+
+		res := new(storagepoolsv1.Self)
+
+		res.Id = xmlSchema.Uuid
+		res.Owner = new(resource.OwnerRef)
+		// TODO: Do not hardcode this
+		res.Owner.Id = "de5f8daf-44c0-4e8f-9f32-e822260719c8"
+		res.Owner.Kind = resource.ResourceKindNode
+
+		res.Spec = spec
+
+		res.Kind = resource.ResourceKindStoragePool
+		res.Status.Phase = resource.PhaseCreated
+
+		out = append(out, res)
+	}
+
+	return out, nil
 }

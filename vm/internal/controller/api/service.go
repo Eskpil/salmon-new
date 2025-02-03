@@ -8,7 +8,6 @@ import (
 
 	"github.com/eskpil/salmon/vm/controllerapi"
 	"github.com/eskpil/salmon/vm/internal/controller/models"
-	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/google/uuid"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -155,28 +154,13 @@ func (c Controller) Patch(ctx context.Context, req *controllerapi.PatchRequest) 
 }
 
 func (c Controller) Create(ctx context.Context, input *controllerapi.CreateRequest) (*controllerapi.CreateResponse, error) {
-	out := new(resource.Resource[any])
-
-	id := uuid.NewString()
-	if input.Kind == models.ResourceKindStorageVolume {
-		name := input.Spec.Fields["name"].GetStringValue()
-		id = fmt.Sprintf("%s/%s", input.Owner.Id, name)
+	if input.Resource.Id == "" {
+		input.Resource.Id = uuid.NewString()
 	}
 
-	out.Id = id
-	if input.Owner != nil {
-		out.Owner = new(resource.OwnerRef)
-		out.Owner.Id = input.Owner.Id
-		out.Owner.Kind = input.Owner.Kind
-	}
-	out.Kind = resource.ResourceKind(input.Kind)
-	out.Annotations = input.Annotations
-	out.Spec = input.Spec
-	out.Status.Phase = models.PhaseRequested
+	path := fmt.Sprintf("%s/%s/%s", models.RootKey, input.Resource.Kind, input.Resource.Id)
 
-	path := fmt.Sprintf("%s/%s/%s", models.RootKey, out.Kind, out.Id)
-
-	bytes, err := json.Marshal(out)
+	bytes, err := json.Marshal(input.Resource)
 	if err != nil {
 		panic(err)
 	}

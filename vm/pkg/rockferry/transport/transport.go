@@ -206,14 +206,17 @@ func (t *Transport) Create(ctx context.Context, in *resource.Resource[any]) erro
 	api := t.C()
 
 	req := new(controllerapi.CreateRequest)
+	req.Resource = new(controllerapi.Resource)
 
-	req.Kind = string(in.Kind)
-	req.Annotations = in.Annotations
+	req.Resource.Id = in.Id
+
+	req.Resource.Kind = string(in.Kind)
+	req.Resource.Annotations = in.Annotations
 
 	if in.Owner != nil {
-		req.Owner = new(controllerapi.Owner)
-		req.Owner.Id = in.Owner.Id
-		req.Owner.Kind = in.Owner.Kind
+		req.Resource.Owner = new(controllerapi.Owner)
+		req.Resource.Owner.Id = in.Owner.Id
+		req.Resource.Owner.Kind = in.Owner.Kind
 	}
 
 	spec, err := convert.Outgoing(&in.Spec)
@@ -221,9 +224,9 @@ func (t *Transport) Create(ctx context.Context, in *resource.Resource[any]) erro
 		return err
 	}
 
-	req.Spec = spec
-	req.Status = new(controllerapi.Status)
-	req.Status.Phase = string(in.Status.Phase)
+	req.Resource.Spec = spec
+	req.Resource.Status = new(controllerapi.Status)
+	req.Resource.Status.Phase = string(in.Status.Phase)
 
 	_, err = api.Create(ctx, req)
 	return err
