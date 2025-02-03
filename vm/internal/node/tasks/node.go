@@ -39,5 +39,6 @@ func (t *SyncNodeTask) Execute(ctx context.Context, e *Executor) error {
 	uname, _ := uname.New()
 	modified.Spec.Kernel = fmt.Sprintf("%s %s %s", uname.Sysname(), uname.Machine(), uname.KernelRelease())
 
-	return e.Rockferry.Nodes().Patch(ctx, original, modified)
+	// TODO: Should be patch, but caused error on controller
+	return e.Rockferry.Nodes().Create(ctx, modified)
 }

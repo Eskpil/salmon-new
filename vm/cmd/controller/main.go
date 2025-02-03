@@ -68,12 +68,6 @@ func main() {
 		wg.Done()
 	}(wg)
 
-	//wg.Add(1)
-	//go func(wg *sync.WaitGroup) {
-	//	cron.SyncWithNodes()
-	//	wg.Done()
-	//}(wg)
-
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		server := echo.New()

@@ -12,17 +12,22 @@ type CreateVolumeTask struct {
 }
 
 func (t *CreateVolumeTask) Execute(ctx context.Context, executor *Executor) error {
-	pool := t.Volume.Owner.Id
+	pools, err := executor.Rockferry.StoragePools().List(ctx, t.Volume.Owner.Id, nil)
+	if err != nil {
+		return err
+	}
+	pool := pools[0]
+
 	name := t.Volume.Spec.Name
 	format := "raw"
 	capacity := t.Volume.Spec.Capacity
 	allocation := t.Volume.Spec.Allocation
 
-	if err := executor.Libvirt.CreateVolume(pool, name, format, capacity, allocation); err != nil {
+	if err := executor.Libvirt.CreateVolume(pool.Spec.Name, name, format, capacity, allocation); err != nil {
 		return err
 	}
 
-	updatedSpec, err := executor.Libvirt.QueryVolumeSpec(t.Volume.Owner.Id, t.Volume.Spec.Name)
+	updatedSpec, err := executor.Libvirt.QueryVolumeSpec(pool.Spec.Name, t.Volume.Spec.Name)
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 			return nil, err
 		}
 
-		volumeSpec, err := executor.Libvirt.QueryVolumeSpec(disk.Pool, name)
+		volumeSpec, err := executor.Libvirt.QueryVolumeSpec(pool.Spec.Name, name)
 		if err != nil {
 			return nil, err
 		}
