@@ -24,9 +24,9 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		client, _ := rockferry.New()
+		client, _ := rockferry.New("10.100.0.102:9090")
 
-		resources, err := client.Generic().List(ctx, "", "", nil)
+		resources, err := client.Generic(args[0]).List(ctx, "", nil)
 		if err != nil {
 			panic(err)
 		}

@@ -75,7 +75,7 @@ func (c Controller) List(ctx context.Context, req *controllerapi.ListRequest) (*
 	path := ""
 	if req.Id == nil {
 		opts = append(opts, clientv3.WithPrefix())
-		path = fmt.Sprintf("%s/%s", models.RootKey, req.Kind)
+		path = fmt.Sprintf("%s/%s/", models.RootKey, req.Kind)
 	} else {
 		path = fmt.Sprintf("%s/%s/%s", models.RootKey, req.Kind, *req.Id)
 	}

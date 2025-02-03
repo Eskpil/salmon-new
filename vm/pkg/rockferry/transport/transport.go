@@ -154,8 +154,6 @@ func (t *Transport) Patch(ctx context.Context, original *resource.Resource[any],
 	}
 	req.Patches = patch.Raw()
 
-	fmt.Println(string(req.Patches))
-
 	_, err = api.Patch(ctx, req)
 	if err != nil {
 		return err

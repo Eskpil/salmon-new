@@ -7,7 +7,7 @@ import (
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/eskpil/salmon/vm/nodeapi"
-	machinesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/machines"
+	"github.com/eskpil/salmon/vm/pkg/rockferry/spec"
 	"github.com/eskpil/salmon/vm/pkg/virtwrap/domain"
 )
 
@@ -121,7 +121,7 @@ func (c *Client) QueryMachines() ([]*nodeapi.Machine, error) {
 	return machines, nil
 }
 
-func (c *Client) CreateDomain(spec *machinesv1.Spec) error {
+func (c *Client) CreateDomain(spec *spec.MachineSpec) error {
 	schema := new(domain.Schema)
 
 	schema.Name = spec.Name

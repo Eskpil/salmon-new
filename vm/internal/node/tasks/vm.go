@@ -5,21 +5,20 @@ import (
 	"fmt"
 
 	"github.com/eskpil/salmon/vm/pkg/mac"
+	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
-	machinerequestsv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/machinerequests"
-	machinesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/machines"
-	storagevolumesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagevolumes"
+	"github.com/eskpil/salmon/vm/pkg/rockferry/spec"
 	"github.com/google/uuid"
 )
 
 type CreateVirtualMachineTask struct {
-	Request *machinerequestsv1.Self
+	Request *rockferry.MachineRequest
 }
 
-func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *Executor) ([]*machinesv1.SpecDisk, error) {
+func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *Executor) ([]*spec.MachineSpecDisk, error) {
 	fmt.Println(t.Request.Spec)
 
-	disks := []*machinesv1.SpecDisk{}
+	disks := []*spec.MachineSpecDisk{}
 
 	for _, disk := range t.Request.Spec.Disks {
 		poolId := disk.Pool
@@ -41,16 +40,16 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 			return nil, err
 		}
 
-		spec, err := executor.Libvirt.QueryVolumeSpec(disk.Pool, name)
+		volumeSpec, err := executor.Libvirt.QueryVolumeSpec(disk.Pool, name)
 		if err != nil {
 			return nil, err
 		}
 
-		out := new(storagevolumesv1.Self)
+		out := new(rockferry.StorageVolume)
 
 		out.Id = fmt.Sprintf("%s/%s", pool.Id, name)
 		out.Kind = resource.ResourceKindStorageVolume
-		out.Spec = spec
+		out.Spec = *volumeSpec
 		out.Status.Phase = resource.PhaseCreated
 		out.Owner = new(resource.OwnerRef)
 		out.Owner.Id = pool.Id
@@ -60,35 +59,35 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 			panic(err)
 		}
 
-		d := new(machinesv1.SpecDisk)
+		d := new(spec.MachineSpecDisk)
 		if pool.Spec.Type == "rbd" {
 			d.Type = "network"
 			d.Device = "disk"
 
-			d.Network = new(machinesv1.SpecDiskNetwork)
+			d.Network = new(spec.MachineSpecDiskNetwork)
 			d.Network.Protocol = pool.Spec.Type
-			d.Network.Key = spec.Key
+			d.Network.Key = volumeSpec.Key
 			d.Network.Hosts = pool.Spec.Source.Hosts
-			d.Network.Auth = pool.Spec.Source.Auth
-			d.Network.Key = spec.Key
+			d.Network.Auth = *pool.Spec.Source.Auth
+			d.Network.Key = volumeSpec.Key
 		}
 
 		if pool.Spec.Type == "dir" {
 			d.Type = "file"
 			d.Device = "disk"
 
-			d.File = new(machinesv1.SpecDiskFile)
-			d.File.Key = spec.Key
+			d.File = new(spec.MachineSpecDiskFile)
+			d.File.Key = volumeSpec.Key
 		}
 
 		disks = append(disks, d)
 	}
 
 	// TODO: CDROM can be network disk as well
-	cdrom := new(machinesv1.SpecDisk)
+	cdrom := new(spec.MachineSpecDisk)
 
 	// This could probably be more clean
-	cdrom.File = new(machinesv1.SpecDiskFile)
+	cdrom.File = new(spec.MachineSpecDiskFile)
 	cdrom.File.Key = t.Request.Spec.Cdrom.Key
 	cdrom.Device = "cdrom"
 	cdrom.Type = "file"
@@ -98,8 +97,8 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 	return disks, nil
 }
 
-func (t *CreateVirtualMachineTask) createNetworkInterfaces(ctx context.Context, executor *Executor) ([]*machinesv1.SpecInterface, error) {
-	interfaces := make([]*machinesv1.SpecInterface, 1)
+func (t *CreateVirtualMachineTask) createNetworkInterfaces(ctx context.Context, executor *Executor) ([]*spec.MachineSpecInterface, error) {
+	interfaces := make([]*spec.MachineSpecInterface, 1)
 
 	networks, err := executor.Rockferry.Networks().List(ctx, t.Request.Spec.Network, nil)
 	if err != nil {
@@ -113,7 +112,7 @@ func (t *CreateVirtualMachineTask) createNetworkInterfaces(ctx context.Context, 
 		return nil, err
 	}
 
-	interfaces[0] = new(machinesv1.SpecInterface)
+	interfaces[0] = new(spec.MachineSpecInterface)
 	interfaces[0].Mac = mac
 	interfaces[0].Model = "virtio"
 
@@ -137,14 +136,14 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 		return err
 	}
 
-	spec := new(machinesv1.Spec)
+	spec := new(spec.MachineSpec)
 
 	spec.Name = t.Request.Spec.Name
 	spec.Topology = t.Request.Spec.Topology
 	spec.Disks = disks
 	spec.Interfaces = interfaces
 
-	res := new(machinesv1.Self)
+	res := new(rockferry.Machine)
 
 	res.Id = uuid.NewString()
 	res.Kind = resource.ResourceKindMachine
@@ -159,7 +158,7 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 		return err
 	}
 
-	res.Spec = spec
+	res.Spec = *spec
 	res.Status.Phase = resource.PhaseCreated
 
 	return executor.Rockferry.Machines().Create(ctx, res)

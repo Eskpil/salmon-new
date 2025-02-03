@@ -3,12 +3,12 @@ package tasks
 import (
 	"context"
 
+	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
-	storagevolumesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagevolumes"
 )
 
 type CreateVolumeTask struct {
-	Volume *storagevolumesv1.Self
+	Volume *rockferry.StorageVolume
 }
 
 func (t *CreateVolumeTask) Execute(ctx context.Context, executor *Executor) error {
@@ -27,9 +27,9 @@ func (t *CreateVolumeTask) Execute(ctx context.Context, executor *Executor) erro
 		return err
 	}
 
-	modified := new(storagevolumesv1.Self)
+	modified := new(rockferry.StorageVolume)
 	*modified = *t.Volume
-	modified.Spec = updatedSpec
+	modified.Spec = *updatedSpec
 
 	return executor.Rockferry.StorageVolumes().Patch(ctx, t.Volume, modified)
 }

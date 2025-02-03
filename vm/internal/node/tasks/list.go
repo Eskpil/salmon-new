@@ -51,7 +51,7 @@ func (t *TaskList) AppendUnbound(task Task) {
 }
 
 func (t *TaskList) setResourcePhase(ctx context.Context, res *resource.Resource[any], phase resource.Phase, error string) error {
-	generic := t.e.Rockferry.Generic()
+	generic := t.e.Rockferry.Generic(resource.ResourceKindAll)
 
 	copy := new(resource.Resource[any])
 	*copy = *res

@@ -2,9 +2,10 @@ package resource
 
 import "google.golang.org/protobuf/types/known/structpb"
 
-type ResourceKind string
+type ResourceKind = string
 
 const (
+	ResourceKindAll            = ""
 	ResourceKindNode           = "node"
 	ResourceKindStoragePool    = "storagepool"
 	ResourceKindStorageVolume  = "storagevolume"

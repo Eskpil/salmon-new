@@ -6,9 +6,9 @@ import (
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/eskpil/salmon/vm/nodeapi"
+	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
-	storagepoolsv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagepools"
-	storagevolumesv1 "github.com/eskpil/salmon/vm/pkg/rockferry/v1/storagevolumes"
+	"github.com/eskpil/salmon/vm/pkg/rockferry/spec"
 	"github.com/eskpil/salmon/vm/pkg/virtwrap/storagepool"
 	"github.com/eskpil/salmon/vm/pkg/virtwrap/storagevol"
 	"github.com/google/uuid"
@@ -213,7 +213,7 @@ func (c *Client) CreateVolume(poolUuid string, name string, format string, capac
 	return c.preloadStorage()
 }
 
-func (c *Client) QueryVolumeSpec(poolUuid string, name string) (*storagevolumesv1.Spec, error) {
+func (c *Client) QueryVolumeSpec(poolUuid string, name string) (*spec.StorageVolumeSpec, error) {
 	t, err := c.findPoolByUuid(poolUuid)
 	if err != nil {
 		return nil, err
@@ -239,7 +239,7 @@ func (c *Client) QueryVolumeSpec(poolUuid string, name string) (*storagevolumesv
 		return nil, err
 	}
 
-	spec := new(storagevolumesv1.Spec)
+	spec := new(spec.StorageVolumeSpec)
 
 	spec.Key = xmlSchema.Key
 	spec.Name = xmlSchema.Name
@@ -249,13 +249,13 @@ func (c *Client) QueryVolumeSpec(poolUuid string, name string) (*storagevolumesv
 	return spec, nil
 }
 
-func (c *Client) QueryStoragePools() ([]*storagepoolsv1.Self, error) {
+func (c *Client) QueryStoragePools() ([]*rockferry.StoragePool, error) {
 	unmapped, _, err := c.v.ConnectListAllStoragePools(100, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	out := []*storagepoolsv1.Self{}
+	out := []*rockferry.StoragePool{}
 
 	for _, u := range unmapped {
 		xmlDesc, err := c.v.StoragePoolGetXMLDesc(u, 0)
@@ -273,34 +273,34 @@ func (c *Client) QueryStoragePools() ([]*storagepoolsv1.Self, error) {
 			return nil, err
 		}
 
-		spec := new(storagepoolsv1.Spec)
-		spec.Name = xmlSchema.Name
+		storagePoolSpec := new(spec.StoragePoolSpec)
+		storagePoolSpec.Name = xmlSchema.Name
 
-		spec.Type = string(xmlSchema.Type)
-		spec.Allocation = allocation
-		spec.Capacity = capacity
-		spec.Available = avaliable
+		storagePoolSpec.Type = string(xmlSchema.Type)
+		storagePoolSpec.Allocation = allocation
+		storagePoolSpec.Capacity = capacity
+		storagePoolSpec.Available = avaliable
 
-		spec.Source = new(storagepoolsv1.SpecSource)
+		storagePoolSpec.Source = new(spec.StoragePoolSpecSource)
 
-		spec.Source.Name = xmlSchema.Source.Name
+		storagePoolSpec.Source.Name = xmlSchema.Source.Name
 
-		host := new(storagepoolsv1.SpecSourceHost)
+		host := new(spec.StoragePoolSpecSourceHost)
 		host.Name = xmlSchema.Source.Host.Name
 		host.Port = xmlSchema.Source.Host.Port
-		spec.Source.Hosts = append(spec.Source.Hosts, host)
+		storagePoolSpec.Source.Hosts = append(storagePoolSpec.Source.Hosts, host)
 
-		auth := new(storagepoolsv1.SpecSourceAuth)
+		auth := new(spec.StoragePoolSpecSourceAuth)
 
 		if xmlSchema.Source.Auth.Type != "" {
 			auth.Type = xmlSchema.Source.Auth.Type
 			auth.Username = xmlSchema.Source.Auth.Username
 			auth.Secret = xmlSchema.Source.Auth.Secrets[0].Uuid
 
-			spec.Source.Auth = auth
+			storagePoolSpec.Source.Auth = auth
 		}
 
-		res := new(storagepoolsv1.Self)
+		res := new(rockferry.StoragePool)
 
 		res.Id = xmlSchema.Uuid
 		res.Owner = new(resource.OwnerRef)
@@ -308,7 +308,7 @@ func (c *Client) QueryStoragePools() ([]*storagepoolsv1.Self, error) {
 		res.Owner.Id = "de5f8daf-44c0-4e8f-9f32-e822260719c8"
 		res.Owner.Kind = resource.ResourceKindNode
 
-		res.Spec = spec
+		res.Spec = *storagePoolSpec
 
 		res.Kind = resource.ResourceKindStoragePool
 		res.Status.Phase = resource.PhaseCreated

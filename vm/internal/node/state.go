@@ -3,6 +3,7 @@ package node
 import (
 	"context"
 
+	"github.com/eskpil/salmon/vm/internal/node/config"
 	"github.com/eskpil/salmon/vm/internal/node/tasks"
 	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
@@ -14,11 +15,11 @@ type State struct {
 	t *tasks.TaskList
 }
 
-func New() (*State, error) {
+func New(c *config.Config) (*State, error) {
 	var err error
 	state := new(State)
 
-	client, err := rockferry.New()
+	client, err := rockferry.New(c.Url)
 	if err != nil {
 		return nil, err
 	}

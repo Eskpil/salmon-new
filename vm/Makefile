@@ -30,5 +30,6 @@ build_nodeapi: nodeapi
 
 node: build_nodeapi
 	ssh root@10.100.0.101 rm -rf /root/node
+	scp config.yml root@10.100.0.101:/root/config.yml
 	scp node root@10.100.0.101:/root/node
 	ssh -t root@10.100.0.101 /root/node
