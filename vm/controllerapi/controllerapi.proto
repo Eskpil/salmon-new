@@ -6,7 +6,8 @@ import "google/protobuf/struct.proto";
 option go_package = "github.com/eskpil/salmon/vm/controllerapi";
 
 // TODO: Add filtering, now all resources returned are those
-//       who has the node as owner and status requested.
+//       who are newly changed or created. The client has to
+//       filter based on the Resource.Status.Phase
 message WatchRequest {
     string kind = 1;
     optional string id = 2;
