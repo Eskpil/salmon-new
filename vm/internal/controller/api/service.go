@@ -33,7 +33,11 @@ func (c Controller) Watch(req *controllerapi.WatchRequest, res grpc.ServerStream
 		path = fmt.Sprintf("%s/%s/%s", models.RootKey, req.Kind, req.Owner.Id)
 	}
 
-	channel := c.Db.Watch(ctx, path, clientv3.WithPrefix())
+	if req.Action == controllerapi.WatchAction_DELETE {
+		opts = append(opts, clientv3.WithPrevKV())
+	}
+
+	channel := c.Db.Watch(ctx, path, opts...)
 
 	for {
 		w := <-channel
@@ -46,6 +50,15 @@ func (c Controller) Watch(req *controllerapi.WatchRequest, res grpc.ServerStream
 		}
 
 		for _, event := range w.Events {
+			// NOTE: Skip unwanted events
+			if int(event.Type) != int(req.Action) && req.Action != controllerapi.WatchAction_ALL {
+				continue
+			}
+
+			if req.Action == controllerapi.WatchAction_DELETE {
+				event.Kv = event.PrevKv
+			}
+
 			resource := new(controllerapi.Resource)
 			if err := json.Unmarshal(event.Kv.Value, resource); err != nil {
 				panic(err)
@@ -81,7 +94,7 @@ func (c Controller) List(ctx context.Context, req *controllerapi.ListRequest) (*
 	}
 
 	// TODO: Avoid this hack
-	if req.Kind == models.ResourceKindStorageVolume && req.Owner != nil {
+	if req.Kind == models.ResourceKindStorageVolume && req.Owner != nil && req.Id == nil {
 		path = fmt.Sprintf("%s/%s/%s", models.RootKey, req.Kind, req.Owner.Id)
 	}
 
@@ -89,6 +102,10 @@ func (c Controller) List(ctx context.Context, req *controllerapi.ListRequest) (*
 	if err != nil {
 		fmt.Println("failed to fetch resources", err)
 		return nil, status.Errorf(codes.Internal, "something wrong happend")
+	}
+
+	if 0 >= len(res.Kvs) {
+		return nil, status.Errorf(codes.NotFound, "resource not found")
 	}
 
 	response := new(controllerapi.ListResponse)
@@ -127,6 +144,10 @@ func (c Controller) Patch(ctx context.Context, req *controllerapi.PatchRequest) 
 	if err != nil {
 		fmt.Println("failed to fetch resource", err)
 		return nil, status.Errorf(codes.Internal, "something wrong happend")
+	}
+
+	if 0 >= len(res.Kvs) {
+		return nil, status.Errorf(codes.NotFound, "resource not found")
 	}
 
 	if 2 <= len(res.Kvs) {

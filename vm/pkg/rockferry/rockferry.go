@@ -7,6 +7,14 @@ import (
 	"github.com/eskpil/salmon/vm/pkg/rockferry/transport"
 )
 
+type WatchAction = int
+
+const (
+	WatchActionPut WatchAction = iota
+	WatchActionDelete
+	WatchActionAll
+)
+
 type MachineRequest = resource.Resource[spec.MachineRequestSpec]
 type StorageVolume = resource.Resource[spec.StorageVolumeSpec]
 type StoragePool = resource.Resource[spec.StoragePoolSpec]

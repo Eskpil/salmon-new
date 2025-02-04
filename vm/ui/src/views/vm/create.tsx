@@ -45,7 +45,7 @@ const PoolSelect: React.FC<{
                 <Select.Content>
                     <Select.Group>
                         <Select.Label>Pools</Select.Label>
-                        {data?.data?.list.map((resource) => {
+                        {data?.data?.list?.map((resource) => {
                             const pool = resource!.spec;
 
                             return (
@@ -90,7 +90,7 @@ const VolumeSelect: React.FC<{
                 <Select.Content>
                     <Select.Group>
                         <Select.Label>Volumes</Select.Label>
-                        {data?.data?.list.map((resource) => {
+                        {data?.data?.list?.map((resource) => {
                             const volume = resource!.spec;
 
                             return (
@@ -135,7 +135,7 @@ const NetworkSelect: React.FC<{
                 <Select.Content>
                     <Select.Group>
                         <Select.Label>Pools</Select.Label>
-                        {data?.data?.list.map((resource) => {
+                        {data?.data?.list?.map((resource) => {
                             const pool = resource!.spec;
 
                             return (

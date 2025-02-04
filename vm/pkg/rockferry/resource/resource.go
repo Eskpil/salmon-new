@@ -52,6 +52,13 @@ type Resource[T any] struct {
 	RawSpec *structpb.Struct `json:"-"`
 }
 
+func (r *Resource[T]) Merge(with *Resource[T]) {
+	// TODO: More fields possibily?
+	for k, v := range with.Annotations {
+		r.Annotations[k] = v
+	}
+}
+
 func (r *Resource[T]) Generic() *Resource[any] {
 	var spec interface{}
 	spec = r.Spec

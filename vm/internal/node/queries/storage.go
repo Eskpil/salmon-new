@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 
+	"github.com/digitalocean/go-libvirt"
 	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/spec"
@@ -188,4 +189,13 @@ func (c *Client) QueryStoragePools() ([]*rockferry.StoragePool, error) {
 	}
 
 	return out, nil
+}
+
+func (c *Client) DeleteStorageVolume(key string) error {
+	vol, err := c.v.StorageVolLookupByKey(key)
+	if err != nil {
+		return err
+	}
+
+	return c.v.StorageVolDelete(vol, libvirt.StorageVolDeleteZeroed)
 }

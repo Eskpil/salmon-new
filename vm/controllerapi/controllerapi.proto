@@ -5,6 +5,12 @@ import "google/protobuf/struct.proto";
 
 option go_package = "github.com/eskpil/salmon/vm/controllerapi";
 
+enum WatchAction {
+    PUT = 0;
+    DELETE = 1;
+    ALL = 2;
+}
+
 // TODO: Add filtering, now all resources returned are those
 //       who are newly changed or created. The client has to
 //       filter based on the Resource.Status.Phase
@@ -12,6 +18,7 @@ message WatchRequest {
     string kind = 1;
     optional string id = 2;
     optional Owner owner = 3;
+    WatchAction action = 4;
 }
 
 message WatchResponse {

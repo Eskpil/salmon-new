@@ -8,9 +8,12 @@ import (
 	"github.com/eskpil/salmon/vm/controllerapi"
 	"github.com/eskpil/salmon/vm/pkg/convert"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
+	rstatus "github.com/eskpil/salmon/vm/pkg/rockferry/status"
 	"github.com/snorwin/jsonpatch"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 type Transport struct {
@@ -33,7 +36,7 @@ func (t *Transport) C() controllerapi.ControllerApiClient {
 	return t.client
 }
 
-func (t *Transport) Watch(ctx context.Context, kind resource.ResourceKind, id string, owner *resource.OwnerRef) (chan *resource.Resource[interface{}], error) {
+func (t *Transport) Watch(ctx context.Context, action int, kind resource.ResourceKind, id string, owner *resource.OwnerRef) (chan *resource.Resource[interface{}], error) {
 	api := t.C()
 
 	// Create the initial watch request
@@ -43,6 +46,8 @@ func (t *Transport) Watch(ctx context.Context, kind resource.ResourceKind, id st
 		req.Owner.Id = owner.Id
 		req.Owner.Kind = owner.Kind
 	}
+
+	req.Action = controllerapi.WatchAction(action)
 
 	// Create the channel to send updates
 	out := make(chan *resource.Resource[any])
@@ -129,6 +134,11 @@ func (t *Transport) Patch(ctx context.Context, original *resource.Resource[any],
 		return err
 	}
 
+	// NOTE: If the resource is not update it, why bother the controller
+	if 0 >= len(patch.Raw()) {
+		return nil
+	}
+
 	req := new(controllerapi.PatchRequest)
 
 	req.Id = new(string)
@@ -139,6 +149,7 @@ func (t *Transport) Patch(ctx context.Context, original *resource.Resource[any],
 		req.Owner.Kind = original.Owner.Kind
 		req.Owner.Id = original.Owner.Id
 	}
+
 	req.Patches = patch.Raw()
 
 	_, err = api.Patch(ctx, req)
@@ -153,6 +164,10 @@ func (t *Transport) List(ctx context.Context, kind resource.ResourceKind, id str
 	api := t.C()
 
 	req := new(controllerapi.ListRequest)
+	if id != "" {
+		req.Id = new(string)
+		*req.Id = id
+	}
 	req.Kind = string(kind)
 	if owner != nil {
 		req.Owner.Id = owner.Id
@@ -161,6 +176,12 @@ func (t *Transport) List(ctx context.Context, kind resource.ResourceKind, id str
 
 	response, err := api.List(ctx, req)
 	if err != nil {
+		if s, ok := status.FromError(err); ok && s != nil {
+			if s.Code() == codes.NotFound {
+				return nil, rstatus.NewError(rstatus.ErrNoResults, "no results")
+			}
+		}
+
 		return nil, err
 	}
 

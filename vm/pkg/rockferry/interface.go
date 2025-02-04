@@ -49,8 +49,8 @@ func (i *Interface[S]) List(ctx context.Context, id string, owner *resource.Owne
 	return out, nil
 }
 
-func (i *Interface[S]) Watch(ctx context.Context, id string, owner *resource.OwnerRef) (chan *resource.Resource[S], error) {
-	in, err := i.t.Watch(ctx, i.kind, id, owner)
+func (i *Interface[S]) Watch(ctx context.Context, action WatchAction, id string, owner *resource.OwnerRef) (chan *resource.Resource[S], error) {
+	in, err := i.t.Watch(ctx, action, i.kind, id, owner)
 	if err != nil {
 		return nil, err
 	}

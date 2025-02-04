@@ -134,7 +134,7 @@ export const PoolView: React.FC<Props> = () => {
                     </Table.Row>
                 </Table.Header>
 
-                {data.data?.list.map((resource) => {
+                {data.data?.list?.map((resource) => {
                     const volume = resource.spec!;
 
                     const capacity_gb = Math.round(

@@ -7,6 +7,7 @@ import (
 	"github.com/eskpil/salmon/vm/internal/node/tasks"
 	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
+	"github.com/eskpil/salmon/vm/pkg/rockferry/status"
 )
 
 type State struct {
@@ -91,7 +92,7 @@ func (s *State) watchMachineRequests(ctx context.Context) error {
 			}
 		}
 
-		stream, err := s.Client.MachineRequests().Watch(ctx, "", nil)
+		stream, err := s.Client.MachineRequests().Watch(ctx, rockferry.WatchActionPut, "", nil)
 		if err != nil {
 			return
 		}
@@ -112,21 +113,22 @@ func (s *State) watchMachineRequests(ctx context.Context) error {
 }
 
 func (s *State) watchStorageVolumes(ctx context.Context) error {
+	volumes, err := s.Client.StorageVolumes().List(ctx, "", nil)
+	if err != nil && !status.Is(err, status.ErrNoResults) {
+		return err
+	}
+
+	for _, vol := range volumes {
+		if vol.Status.Phase == resource.PhaseRequested {
+			task := new(tasks.CreateVolumeTask)
+			task.Volume = vol
+			s.t.AppendBound(task)
+		}
+	}
+
+	// TODO: Combine?
 	go func() {
-		volumes, err := s.Client.StorageVolumes().List(ctx, "", nil)
-		if err != nil {
-			return
-		}
-
-		for _, vol := range volumes {
-			if vol.Status.Phase == resource.PhaseRequested {
-				task := new(tasks.CreateVolumeTask)
-				task.Volume = vol
-				s.t.AppendBound(task)
-			}
-		}
-
-		stream, err := s.Client.StorageVolumes().Watch(ctx, "", nil)
+		stream, err := s.Client.StorageVolumes().Watch(ctx, rockferry.WatchActionPut, "", nil)
 		if err != nil {
 			return
 		}
@@ -139,6 +141,22 @@ func (s *State) watchStorageVolumes(ctx context.Context) error {
 				task.Volume = vol
 				s.t.AppendBound(task)
 			}
+
+		}
+	}()
+
+	go func() {
+		stream, err := s.Client.StorageVolumes().Watch(ctx, rockferry.WatchActionDelete, "", nil)
+		if err != nil {
+			return
+		}
+
+		for {
+			vol := <-stream
+
+			task := new(tasks.DeleteVolumeTask)
+			task.Volume = vol
+			s.t.AppendUnbound(task)
 
 		}
 	}()

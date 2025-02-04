@@ -6,6 +6,7 @@ import (
 
 	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
+	"github.com/eskpil/salmon/vm/pkg/rockferry/status"
 )
 
 type SyncStorageVolumesTask struct {
@@ -20,13 +21,44 @@ func (t *SyncStorageVolumesTask) Execute(ctx context.Context, executor *Executor
 	}
 
 	iface := executor.Rockferry.StorageVolumes()
-	for _, volume := range volumes {
-		if err := iface.Create(ctx, volume); err != nil {
-			return err
+	for _, local := range volumes {
+		remotes, err := iface.List(ctx, local.Id, nil)
+		if err != nil {
+			if status.Is(err, status.ErrNoResults) {
+				if err := iface.Create(ctx, local); err != nil {
+					return err
+				}
+
+				continue
+			}
+
+			fmt.Println("failed to find already existing volume", err)
+
+			continue
 		}
+
+		if len(remotes) == 0 {
+			panic("remotes is zero")
+		}
+
+		// NOTE: This will make sure we do not lose any annotations on the way.
+		local.Merge(remotes[0])
+
+		if err := iface.Patch(ctx, remotes[0], local); err != nil {
+			panic(err)
+		}
+
 	}
 
 	return nil
+}
+
+type DeleteVolumeTask struct {
+	Volume *rockferry.StorageVolume
+}
+
+func (t *DeleteVolumeTask) Execute(ctx context.Context, executor *Executor) error {
+	return executor.Libvirt.DeleteStorageVolume(t.Volume.Spec.Key)
 }
 
 type CreateVolumeTask struct {
