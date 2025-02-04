@@ -28,9 +28,7 @@ func Is(err error, code ErrorCode) bool {
 		if code != ErrorCode(possibleCode) {
 			return false
 		}
-
-		return true
 	}
 
-	return false
+	return true
 }
