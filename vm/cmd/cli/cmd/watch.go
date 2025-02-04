@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// machinesCmd represents the machines command
-var machinesCmd = &cobra.Command{
-	Use:   "machines",
+// watchCmd represents the watch command
+var watchCmd = &cobra.Command{
+	Use:   "watch",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -26,27 +26,31 @@ to quickly create a Cobra application.`,
 		ctx := context.Background()
 		client, _ := rockferry.New("10.100.0.102:9090")
 
-		resources, err := client.Machines().List(ctx, "", nil)
+		stream, err := client.Generic(args[0]).Watch(ctx, "", nil)
 		if err != nil {
 			panic(err)
 		}
 
-		out, _ := json.Marshal(resources)
+		for {
+			resource := <-stream
 
-		fmt.Println(string(out))
+			out, _ := json.Marshal(resource)
+			fmt.Println(string(out))
+		}
+
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(machinesCmd)
+	rootCmd.AddCommand(watchCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// machinesCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// watchCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// machinesCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// watchCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
