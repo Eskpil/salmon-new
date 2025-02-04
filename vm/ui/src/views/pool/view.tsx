@@ -1,4 +1,12 @@
-import { AlertDialog, Badge, Box, Button, Flex, Table } from "@radix-ui/themes";
+import {
+    AlertDialog,
+    Badge,
+    Box,
+    Button,
+    Flex,
+    Table,
+    Text,
+} from "@radix-ui/themes";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { getVolumes } from "../../data/queries/volumes";
@@ -129,6 +137,9 @@ export const PoolView: React.FC<Props> = () => {
                     <Table.Row>
                         <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
                         <Table.ColumnHeaderCell>Key</Table.ColumnHeaderCell>
+                        <Table.ColumnHeaderCell>
+                            Virtual Machine
+                        </Table.ColumnHeaderCell>
                         <Table.ColumnHeaderCell>Usage</Table.ColumnHeaderCell>
                         <Table.ColumnHeaderCell>Phase</Table.ColumnHeaderCell>
                     </Table.Row>
@@ -136,6 +147,8 @@ export const PoolView: React.FC<Props> = () => {
 
                 {data.data?.list?.map((resource) => {
                     const volume = resource.spec!;
+
+                    const vm_name = resource.annotations!["vm.name"];
 
                     const capacity_gb = Math.round(
                         convert(volume.capacity, Units.Bytes, Units.Gigabyte),
@@ -151,6 +164,13 @@ export const PoolView: React.FC<Props> = () => {
                                 {volume.name}
                             </Table.RowHeaderCell>
                             <Table.Cell>{volume.key}</Table.Cell>
+                            <Table.Cell>
+                                {vm_name ? (
+                                    <Badge color="purple">{vm_name}</Badge>
+                                ) : (
+                                    <Badge color="red">unassigned</Badge>
+                                )}
+                            </Table.Cell>
                             <Table.Cell>
                                 <Badge color="green">{allocated_gb} Gb</Badge>/
                                 <Badge color="purple">{capacity_gb} Gb</Badge>

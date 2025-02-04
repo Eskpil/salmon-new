@@ -50,6 +50,7 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 
 		out.Annotations = map[string]string{}
 		out.Annotations["vm"] = vmId
+		out.Annotations["vm.name"] = t.Request.Spec.Name
 
 		out.Spec = *volumeSpec
 		out.Status.Phase = resource.PhaseCreated

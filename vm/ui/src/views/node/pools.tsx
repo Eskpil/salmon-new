@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPools } from "../../data/queries/pools";
 import { Badge, Box, Table } from "@radix-ui/themes";
 import { useNavigate } from "react-router";
+import { convert, Units } from "../../utils/conversion";
 
 interface Props {
     id: string;
@@ -35,9 +36,11 @@ export const PoolsView: React.FC<Props> = ({ id }) => {
                 {data.data?.list.map((resource) => {
                     const pool = resource.spec!;
 
-                    const capacity_gb = Math.round(pool.capacity / 1000000000);
+                    const capacity_gb = Math.round(
+                        convert(pool.capacity, Units.Bytes, Units.Gigabyte),
+                    );
                     const allocated_gb = Math.round(
-                        pool.allocated / 1000000000,
+                        convert(pool.allocation, Units.Bytes, Units.Gigabyte),
                     );
 
                     return (
@@ -56,7 +59,7 @@ export const PoolsView: React.FC<Props> = ({ id }) => {
                                 <Badge color="purple">{capacity_gb} Gb</Badge>
                             </Table.Cell>
                             <Table.Cell>
-                                <Badge color="amber">{pool.kind}</Badge>
+                                <Badge color="amber">{pool.type}</Badge>
                             </Table.Cell>
                         </Table.Row>
                     );

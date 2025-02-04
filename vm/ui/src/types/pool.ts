@@ -3,6 +3,7 @@ export interface Pool {
     id: string;
     allocated_volumes: number;
     capacity: number;
-    allocated: number;
-    kind: string;
+    available: number;
+    allocation: number;
+    type: string;
 }
