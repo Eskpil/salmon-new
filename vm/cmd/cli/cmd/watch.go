@@ -26,7 +26,7 @@ to quickly create a Cobra application.`,
 		ctx := context.Background()
 		client, _ := rockferry.New("10.100.0.102:9090")
 
-		stream, err := client.Generic(args[0]).Watch(ctx, "", nil)
+		stream, err := client.Generic(args[0]).Watch(ctx, rockferry.WatchActionAll, "", nil)
 		if err != nil {
 			panic(err)
 		}
