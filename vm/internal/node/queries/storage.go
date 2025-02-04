@@ -2,6 +2,7 @@ package queries
 
 import (
 	"encoding/xml"
+	"fmt"
 
 	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
@@ -76,6 +77,49 @@ func (c *Client) QueryVolumeSpec(poolName string, name string) (*spec.StorageVol
 	spec.Capacity = uint64(xmlSchema.Capacity.Value)
 
 	return spec, nil
+}
+
+func (c *Client) QueryStorageVolumes() ([]*rockferry.StorageVolume, error) {
+	pools, _, err := c.v.ConnectListAllStoragePools(100, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	volumes := []*rockferry.StorageVolume{}
+
+	for _, pool := range pools {
+		names, err := c.v.StoragePoolListVolumes(pool, 100)
+		if err != nil {
+			return nil, err
+		}
+
+		poolId := uuid.UUID([16]byte(pool.UUID))
+
+		for _, name := range names {
+			volume := new(rockferry.StorageVolume)
+
+			volume.Id = fmt.Sprintf("%s/%s", poolId.String(), name)
+			volume.Owner = new(resource.OwnerRef)
+			volume.Annotations = map[string]string{}
+			volume.Annotations["origin"] = "sync"
+
+			volume.Owner.Kind = resource.ResourceKindStoragePool
+			volume.Owner.Id = poolId.String()
+			volume.Kind = resource.ResourceKindStorageVolume
+			volume.Status.Phase = resource.PhaseCreated
+
+			volumeSpec, err := c.QueryVolumeSpec(pool.Name, name)
+			if err != nil {
+				return nil, err
+			}
+
+			volume.Spec = *volumeSpec
+
+			volumes = append(volumes, volume)
+		}
+
+	}
+	return volumes, nil
 }
 
 func (c *Client) QueryStoragePools() ([]*rockferry.StoragePool, error) {

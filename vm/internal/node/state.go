@@ -64,6 +64,11 @@ func (s *State) startupTasks() error {
 	}
 
 	{
+		task := new(tasks.SyncStorageVolumesTask)
+		s.t.AppendUnbound(task)
+	}
+
+	{
 		task := new(tasks.SyncNetworksTask)
 		s.t.AppendUnbound(task)
 	}

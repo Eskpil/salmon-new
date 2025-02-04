@@ -23,7 +23,7 @@ func (c Controller) Watch(req *controllerapi.WatchRequest, res grpc.ServerStream
 	path := ""
 	if req.Id == nil {
 		opts = append(opts, clientv3.WithPrefix())
-		path = fmt.Sprintf("%s/%s/", models.RootKey, req.Kind)
+		path = fmt.Sprintf("%s/%s", models.RootKey, req.Kind)
 	} else {
 		path = fmt.Sprintf("%s/%s/%s", models.RootKey, req.Kind, *req.Id)
 	}
