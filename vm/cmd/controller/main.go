@@ -4,13 +4,11 @@ import (
 	"log"
 	"log/slog"
 	"net"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/eskpil/salmon/vm/controllerapi"
 	"github.com/eskpil/salmon/vm/internal/controller/api"
-	"github.com/eskpil/salmon/vm/internal/controller/config"
 	"github.com/eskpil/salmon/vm/internal/controller/controllers/nodes"
 	"github.com/eskpil/salmon/vm/internal/controller/controllers/resource"
 	"github.com/eskpil/salmon/vm/internal/controller/db"
@@ -18,7 +16,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"gopkg.in/yaml.v3"
 
 	"go.etcd.io/etcd/server/v3/embed"
 )
@@ -41,21 +38,6 @@ func runDb(dir string) {
 	}
 
 	log.Fatal(<-e.Err())
-}
-
-func readConfig() *config.Config {
-	contents, err := os.ReadFile("./config.yml")
-	if err != nil {
-		panic(err)
-	}
-
-	config := new(config.Config)
-
-	if err := yaml.Unmarshal(contents, config); err != nil {
-		panic(err)
-	}
-
-	return config
 }
 
 func main() {
@@ -83,6 +65,7 @@ func main() {
 
 		server.GET("/v1/resources", resource.List())
 		server.POST("v1/resources", resource.Create())
+		server.DELETE("/v1/resources", resource.Delete())
 
 		if err := server.Start("0.0.0.0:8080"); err != nil {
 			panic(err)

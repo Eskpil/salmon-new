@@ -11,7 +11,6 @@ type MachineSpecInterface struct {
 }
 
 type MachineSpecDiskFile struct {
-	Key string `json:"key"`
 }
 
 type MachineSpecDiskNetwork struct {
@@ -19,12 +18,13 @@ type MachineSpecDiskNetwork struct {
 	Auth  StoragePoolSpecSourceAuth    `json:"auth"`
 
 	Protocol string `json:"type"`
-	Key      string `json:"key"`
 }
 
 type MachineSpecDisk struct {
 	Device string `json:"device"`
 	Type   string `json:"type"`
+	Key    string `json:"key"`
+	Volume string `json:"volume"`
 
 	File    *MachineSpecDiskFile    `json:"file,omitempty"`
 	Network *MachineSpecDiskNetwork `json:"network,omitempty"`

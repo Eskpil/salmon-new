@@ -1,8 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Badge, Box, Button, IconButton, Table } from "@radix-ui/themes";
 import { getMachines } from "../../data/queries/machines";
 import { useNavigate } from "react-router";
 import { convert, Units } from "../../utils/conversion";
+import { PlusIcon, TrashIcon } from "@radix-ui/react-icons";
+import { deleteMachine } from "../../data/mutations/machine";
+import { ResourceKind } from "../../types/resource";
 
 interface Props {
     id: string;
@@ -14,6 +17,10 @@ export const VmsView: React.FC<Props> = ({ id }) => {
     const data = useQuery({
         queryKey: [id, `machines`],
         queryFn: () => getMachines(id),
+    });
+
+    const { mutate: deleteMutation } = useMutation({
+        mutationFn: deleteMachine,
     });
 
     if (data.isError) {
@@ -44,7 +51,9 @@ export const VmsView: React.FC<Props> = ({ id }) => {
                         </Table.ColumnHeaderCell>
                         <Table.ColumnHeaderCell>Drives</Table.ColumnHeaderCell>
                         <Table.ColumnHeaderCell>
-                            <IconButton size="1">+</IconButton>
+                            <Badge color="pink">
+                                <PlusIcon />
+                            </Badge>
                         </Table.ColumnHeaderCell>
                     </Table.Row>
                 </Table.Header>
@@ -59,12 +68,7 @@ export const VmsView: React.FC<Props> = ({ id }) => {
                     );
 
                     return (
-                        <Table.Row
-                            key={machine.uuid}
-                            onClick={() => {
-                                console.log("redirecting");
-                            }}
-                        >
+                        <Table.Row key={machine.uuid}>
                             <Table.RowHeaderCell>
                                 <Badge color="green">Running</Badge>
                             </Table.RowHeaderCell>
@@ -97,7 +101,25 @@ export const VmsView: React.FC<Props> = ({ id }) => {
                                     {machine.disks.length}
                                 </Badge>
                             </Table.Cell>
-                            <Table.Cell />
+                            <Table.Cell>
+                                <IconButton
+                                    color="red"
+                                    variant="soft"
+                                    size="1"
+                                    onClick={() => {
+                                        // TODO: This whole thing should bring up an alert.
+
+                                        console.log("deleting");
+
+                                        deleteMutation({
+                                            kind: ResourceKind.Machine,
+                                            id: resource.id,
+                                        });
+                                    }}
+                                >
+                                    <TrashIcon width="15" height="15" />
+                                </IconButton>
+                            </Table.Cell>
                         </Table.Row>
                     );
                 })}

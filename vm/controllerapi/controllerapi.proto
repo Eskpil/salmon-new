@@ -57,11 +57,21 @@ message CreateResponse {
 
 }
 
+message DeleteRequest {
+    string kind = 1;
+    string id = 2;
+}
+
+message DeleteResponse {
+
+}
+
 service ControllerApi {
     rpc Watch(WatchRequest) returns (stream WatchResponse);
     rpc List(ListRequest) returns (ListResponse);
     rpc Create(CreateRequest) returns (CreateResponse);
     rpc Patch(PatchRequest) returns (PatchResponse);
+    rpc Delete(DeleteRequest) returns(DeleteResponse);
 }
 
 

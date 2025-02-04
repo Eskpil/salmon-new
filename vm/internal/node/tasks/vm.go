@@ -63,16 +63,16 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 		}
 
 		d := new(spec.MachineSpecDisk)
+		d.Key = volumeSpec.Key
+		d.Volume = out.Id
 		if pool.Spec.Type == "rbd" {
 			d.Type = "network"
 			d.Device = "disk"
 
 			d.Network = new(spec.MachineSpecDiskNetwork)
 			d.Network.Protocol = pool.Spec.Type
-			d.Network.Key = volumeSpec.Key
 			d.Network.Hosts = pool.Spec.Source.Hosts
 			d.Network.Auth = *pool.Spec.Source.Auth
-			d.Network.Key = volumeSpec.Key
 		}
 
 		if pool.Spec.Type == "dir" {
@@ -80,7 +80,6 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 			d.Device = "disk"
 
 			d.File = new(spec.MachineSpecDiskFile)
-			d.File.Key = volumeSpec.Key
 		}
 
 		disks = append(disks, d)
@@ -89,9 +88,9 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 	// TODO: CDROM can be network disk as well
 	cdrom := new(spec.MachineSpecDisk)
 
+	cdrom.Key = t.Request.Spec.Cdrom.Key
 	// This could probably be more clean
 	cdrom.File = new(spec.MachineSpecDiskFile)
-	cdrom.File.Key = t.Request.Spec.Cdrom.Key
 	cdrom.Device = "cdrom"
 	cdrom.Type = "file"
 
@@ -151,6 +150,9 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 
 	res := new(rockferry.Machine)
 
+	res.Annotations = map[string]string{}
+	res.Annotations["machinerequest.id"] = t.Request.Id
+
 	res.Id = vmId
 	res.Kind = resource.ResourceKindMachine
 	res.Owner = new(resource.OwnerRef)
@@ -160,7 +162,7 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 
 	res.Status.Phase = resource.PhaseCreated
 
-	if err := executor.Libvirt.CreateDomain(spec); err != nil {
+	if err := executor.Libvirt.CreateDomain(vmId, spec); err != nil {
 		return err
 	}
 
@@ -172,4 +174,28 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 
 func (t *CreateVirtualMachineTask) Resource() *resource.Resource[any] {
 	return t.Request.Generic()
+}
+
+type DeleteVmTask struct {
+	Machine *rockferry.Machine
+}
+
+func (t *DeleteVmTask) Execute(ctx context.Context, e *Executor) error {
+	if err := e.Libvirt.DestroyDomain(t.Machine.Id); err != nil {
+		return err
+	}
+
+	// Cleanup, yay
+	for _, disk := range t.Machine.Spec.Disks {
+		if disk.Volume == "" {
+			continue
+		}
+
+		if err := e.Rockferry.StorageVolumes().Delete(ctx, disk.Volume); err != nil {
+			fmt.Println("failed to delete storage volume", err)
+			continue
+		}
+	}
+
+	return e.Rockferry.MachineRequests().Delete(ctx, t.Machine.Annotations["machinerequest.id"])
 }

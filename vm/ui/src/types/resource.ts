@@ -40,3 +40,8 @@ export interface CreateResourceInput {
     owner_ref: OwnerRef | undefined;
     spec: any;
 }
+
+export interface DeleteResourceInput {
+    kind: ResourceKind;
+    id: string;
+}

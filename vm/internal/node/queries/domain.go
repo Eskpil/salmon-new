@@ -3,15 +3,19 @@ package queries
 import (
 	"encoding/xml"
 
+	"github.com/digitalocean/go-libvirt"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/spec"
 	"github.com/eskpil/salmon/vm/pkg/virtwrap/domain"
+	"github.com/google/uuid"
 )
 
-func (c *Client) CreateDomain(spec *spec.MachineSpec) error {
+func (c *Client) CreateDomain(id string, spec *spec.MachineSpec) error {
 	schema := new(domain.Schema)
 
 	schema.Name = spec.Name
 	schema.Type = "kvm"
+
+	schema.UUID = id
 
 	schema.Memory.Unit = "bytes"
 	schema.Memory.Value = spec.Topology.Memory
@@ -58,7 +62,7 @@ func (c *Client) CreateDomain(spec *spec.MachineSpec) error {
 			disk.Auth.Secret.UUID = d.Network.Auth.Secret
 
 			disk.Source.Protocol = d.Network.Protocol
-			disk.Source.Name = d.Network.Key
+			disk.Source.Name = d.Key
 			disk.Source.Host = new(domain.DiskSourceHost)
 			disk.Source.Host.Name = d.Network.Hosts[0].Name
 			disk.Source.Host.Port = d.Network.Hosts[0].Port
@@ -72,7 +76,7 @@ func (c *Client) CreateDomain(spec *spec.MachineSpec) error {
 			disk.Type = "file"
 			disk.Device = d.Device
 
-			disk.Source.File = d.File.Key
+			disk.Source.File = d.Key
 
 			disk.Driver = new(domain.DiskDriver)
 			disk.Driver.Name = "qemu"
@@ -124,4 +128,15 @@ func (c *Client) CreateDomain(spec *spec.MachineSpec) error {
 	_ = returned
 
 	return nil
+}
+
+func (c *Client) DestroyDomain(id string) error {
+	domId := uuid.MustParse(id)
+
+	domain, err := c.v.DomainLookupByUUID(libvirt.UUID(domId))
+	if err != nil {
+		return err
+	}
+
+	return c.v.DomainDestroy(domain)
 }

@@ -23,6 +23,7 @@ const (
 	ControllerApi_List_FullMethodName   = "/controllerapi.ControllerApi/List"
 	ControllerApi_Create_FullMethodName = "/controllerapi.ControllerApi/Create"
 	ControllerApi_Patch_FullMethodName  = "/controllerapi.ControllerApi/Patch"
+	ControllerApi_Delete_FullMethodName = "/controllerapi.ControllerApi/Delete"
 )
 
 // ControllerApiClient is the client API for ControllerApi service.
@@ -33,6 +34,7 @@ type ControllerApiClient interface {
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Patch(ctx context.Context, in *PatchRequest, opts ...grpc.CallOption) (*PatchResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
 type controllerApiClient struct {
@@ -92,6 +94,16 @@ func (c *controllerApiClient) Patch(ctx context.Context, in *PatchRequest, opts 
 	return out, nil
 }
 
+func (c *controllerApiClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, ControllerApi_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControllerApiServer is the server API for ControllerApi service.
 // All implementations must embed UnimplementedControllerApiServer
 // for forward compatibility.
@@ -100,6 +112,7 @@ type ControllerApiServer interface {
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Patch(context.Context, *PatchRequest) (*PatchResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedControllerApiServer()
 }
 
@@ -121,6 +134,9 @@ func (UnimplementedControllerApiServer) Create(context.Context, *CreateRequest) 
 }
 func (UnimplementedControllerApiServer) Patch(context.Context, *PatchRequest) (*PatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Patch not implemented")
+}
+func (UnimplementedControllerApiServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedControllerApiServer) mustEmbedUnimplementedControllerApiServer() {}
 func (UnimplementedControllerApiServer) testEmbeddedByValue()                       {}
@@ -208,6 +224,24 @@ func _ControllerApi_Patch_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControllerApi_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerApiServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ControllerApi_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerApiServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControllerApi_ServiceDesc is the grpc.ServiceDesc for ControllerApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -226,6 +260,10 @@ var ControllerApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Patch",
 			Handler:    _ControllerApi_Patch_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _ControllerApi_Delete_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

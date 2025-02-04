@@ -50,6 +50,10 @@ func (s *State) Watch(ctx context.Context) error {
 		return err
 	}
 
+	if err := s.watchMachines(ctx); err != nil {
+		return err
+	}
+
 	return s.t.Run(ctx)
 }
 
@@ -106,6 +110,24 @@ func (s *State) watchMachineRequests(ctx context.Context) error {
 				s.t.AppendBound(task)
 			}
 
+		}
+	}()
+
+	return nil
+}
+
+func (s *State) watchMachines(ctx context.Context) error {
+	go func() {
+		stream, err := s.Client.Machines().Watch(ctx, rockferry.WatchActionDelete, "", nil)
+		if err != nil {
+			return
+		}
+
+		for {
+			machine := <-stream
+			task := new(tasks.DeleteVmTask)
+			task.Machine = machine
+			s.t.AppendUnbound(task)
 		}
 	}()
 

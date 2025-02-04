@@ -73,3 +73,7 @@ func (i *Interface[S]) Patch(ctx context.Context, original *resource.Resource[S]
 func (i *Interface[S]) Create(ctx context.Context, res *resource.Resource[S]) error {
 	return i.t.Create(ctx, res.Generic())
 }
+
+func (i *Interface[S]) Delete(ctx context.Context, id string) error {
+	return i.t.Delete(ctx, i.kind, id)
+}

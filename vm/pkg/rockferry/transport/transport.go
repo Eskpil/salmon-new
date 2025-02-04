@@ -41,7 +41,7 @@ func (t *Transport) Watch(ctx context.Context, action int, kind resource.Resourc
 
 	// Create the initial watch request
 	req := new(controllerapi.WatchRequest)
-	req.Kind = resource.ResourceKindStorageVolume
+	req.Kind = kind
 	if owner != nil {
 		req.Owner.Id = owner.Id
 		req.Owner.Kind = owner.Kind
@@ -235,5 +235,16 @@ func (t *Transport) Create(ctx context.Context, in *resource.Resource[any]) erro
 	req.Resource.Status.Phase = string(in.Status.Phase)
 
 	_, err = api.Create(ctx, req)
+	return err
+}
+
+func (t *Transport) Delete(ctx context.Context, kind resource.ResourceKind, id string) error {
+	api := t.C()
+
+	req := new(controllerapi.DeleteRequest)
+	req.Kind = kind
+	req.Id = id
+
+	_, err := api.Delete(ctx, req)
 	return err
 }

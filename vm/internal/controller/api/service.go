@@ -23,7 +23,7 @@ func (c Controller) Watch(req *controllerapi.WatchRequest, res grpc.ServerStream
 	path := ""
 	if req.Id == nil {
 		opts = append(opts, clientv3.WithPrefix())
-		path = fmt.Sprintf("%s/%s", models.RootKey, req.Kind)
+		path = fmt.Sprintf("%s/%s/", models.RootKey, req.Kind)
 	} else {
 		path = fmt.Sprintf("%s/%s/%s", models.RootKey, req.Kind, *req.Id)
 	}
@@ -192,4 +192,19 @@ func (c Controller) Create(ctx context.Context, input *controllerapi.CreateReque
 	}
 
 	return new(controllerapi.CreateResponse), nil
+}
+
+func (c Controller) Delete(ctx context.Context, req *controllerapi.DeleteRequest) (*controllerapi.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	path := fmt.Sprintf("%s/%s/%s", models.RootKey, req.Kind, req.Id)
+
+	_, err := c.Db.Delete(ctx, path)
+	if err != nil {
+		fmt.Println("failed to delete resource")
+		return nil, status.Errorf(codes.Internal, "something wrong happend")
+	}
+
+	return new(controllerapi.DeleteResponse), nil
 }
