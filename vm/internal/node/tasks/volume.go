@@ -2,10 +2,32 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/eskpil/salmon/vm/pkg/rockferry"
 	"github.com/eskpil/salmon/vm/pkg/rockferry/resource"
 )
+
+type SyncStorageVolumesTask struct {
+}
+
+func (t *SyncStorageVolumesTask) Execute(ctx context.Context, executor *Executor) error {
+	fmt.Println("executing sync storage volumes task")
+
+	volumes, err := executor.Libvirt.QueryStorageVolumes()
+	if err != nil {
+		return err
+	}
+
+	iface := executor.Rockferry.StorageVolumes()
+	for _, volume := range volumes {
+		if err := iface.Create(ctx, volume); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 type CreateVolumeTask struct {
 	Volume *rockferry.StorageVolume

@@ -15,7 +15,7 @@ type CreateVirtualMachineTask struct {
 	Request *rockferry.MachineRequest
 }
 
-func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *Executor) ([]*spec.MachineSpecDisk, error) {
+func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *Executor, vmId string) ([]*spec.MachineSpecDisk, error) {
 	disks := []*spec.MachineSpecDisk{}
 
 	for _, disk := range t.Request.Spec.Disks {
@@ -47,6 +47,10 @@ func (t *CreateVirtualMachineTask) createVmDisks(ctx context.Context, executor *
 
 		out.Id = fmt.Sprintf("%s/%s", pool.Id, name)
 		out.Kind = resource.ResourceKindStorageVolume
+
+		out.Annotations = map[string]string{}
+		out.Annotations["vm"] = vmId
+
 		out.Spec = *volumeSpec
 		out.Status.Phase = resource.PhaseCreated
 		out.Owner = new(resource.OwnerRef)
@@ -124,7 +128,10 @@ func (t *CreateVirtualMachineTask) createNetworkInterfaces(ctx context.Context, 
 }
 
 func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Executor) error {
-	disks, err := t.createVmDisks(ctx, executor)
+	// NOTE: Used to annotate storage volumes with the vm id. This is useful for deletion.
+	vmId := uuid.NewString()
+
+	disks, err := t.createVmDisks(ctx, executor, vmId)
 	if err != nil {
 		return err
 	}
@@ -143,7 +150,7 @@ func (t *CreateVirtualMachineTask) Execute(ctx context.Context, executor *Execut
 
 	res := new(rockferry.Machine)
 
-	res.Id = uuid.NewString()
+	res.Id = vmId
 	res.Kind = resource.ResourceKindMachine
 	res.Owner = new(resource.OwnerRef)
 	// TODO: Do not hardcode this

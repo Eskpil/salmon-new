@@ -49,7 +49,7 @@ export const VmsView: React.FC<Props> = ({ id }) => {
                     </Table.Row>
                 </Table.Header>
 
-                {data.data?.list.map((resource) => {
+                {data.data?.list?.map((resource) => {
                     const machine = resource.spec!;
 
                     const memory = convert(

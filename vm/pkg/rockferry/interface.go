@@ -50,7 +50,7 @@ func (i *Interface[S]) List(ctx context.Context, id string, owner *resource.Owne
 }
 
 func (i *Interface[S]) Watch(ctx context.Context, id string, owner *resource.OwnerRef) (chan *resource.Resource[S], error) {
-	in, err := i.t.Watch(ctx, resource.ResourceKindStorageVolume, id, owner)
+	in, err := i.t.Watch(ctx, i.kind, id, owner)
 	if err != nil {
 		return nil, err
 	}
