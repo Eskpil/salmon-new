@@ -170,7 +170,7 @@ interface VmCreateValues {
     memory: number;
 }
 
-export const CreateVmView: React.FC<{}> = () => {
+export const CreateVmView: React.FC<unknown> = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
@@ -204,8 +204,13 @@ export const CreateVmView: React.FC<{}> = () => {
                             const machine_request_spec: MachineRequest = {
                                 name: values.name,
                                 topology: {
-                                    cores: parseInt(values.cores as any),
-                                    threads: parseInt(values.threads as any),
+                                    sockets: 1,
+                                    cores: parseInt(
+                                        values.cores as unknown as string,
+                                    ),
+                                    threads: parseInt(
+                                        values.threads as unknown as string,
+                                    ),
                                     memory: convert(
                                         values.memory,
                                         Units.Gigabyte,

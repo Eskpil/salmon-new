@@ -23,7 +23,7 @@ export interface Resource<T> {
     id: string;
     kind: string;
     annotations: Record<string, string> | undefined;
-    owner_ref: OwnerRef | undefined;
+    owner: OwnerRef | undefined;
     spec: T | undefined;
     status: Status;
 }

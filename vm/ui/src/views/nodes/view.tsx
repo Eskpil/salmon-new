@@ -3,7 +3,7 @@ import { getNodes } from "../../data/queries/nodes";
 import { Badge, Box, Table, Text } from "@radix-ui/themes";
 import { useNavigate } from "react-router";
 
-export const NodesView: React.FC<{}> = () => {
+export const NodesView: React.FC<unknown> = () => {
     const navigate = useNavigate();
     const nodes = useQuery({ queryKey: ["nodes"], queryFn: getNodes });
 

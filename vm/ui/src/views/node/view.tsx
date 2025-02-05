@@ -1,10 +1,12 @@
 import {
-    AlertDialog,
+    Badge,
     Box,
-    Button,
     Card,
+    Code,
+    DataList,
     Flex,
     Grid,
+    IconButton,
     Separator,
     Tabs,
     Text,
@@ -15,13 +17,113 @@ import { VmsView } from "./vms";
 import { PieChart } from "@mui/x-charts";
 import { getNode } from "../../data/queries/nodes";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Node } from "../../types/node";
+import { Resource } from "../../types/resource";
+import { CopyIcon } from "@radix-ui/react-icons";
+import { convert, Units } from "../../utils/conversion";
 
-export const NodeView: React.FC<{}> = () => {
+const NodeMetadata: React.FC<{ node: Resource<Node> }> = ({ node }) => {
+    console.log(typeof node.spec?.up_since);
+    console.log(node.spec?.up_since);
+
+    return (
+        <Card>
+            <DataList.Root>
+                <DataList.Item align="center">
+                    <DataList.Label minWidth="88px">Status</DataList.Label>
+                    <DataList.Value>
+                        <Badge color="jade" variant="soft" radius="full">
+                            Connected
+                        </Badge>
+                    </DataList.Value>
+                </DataList.Item>
+                <DataList.Item>
+                    <DataList.Label minWidth="88px">ID</DataList.Label>
+                    <DataList.Value>
+                        <Flex align="center" gap="2">
+                            <Code variant="ghost">{node.id}</Code>
+                            <IconButton
+                                size="1"
+                                aria-label="Copy value"
+                                color="gray"
+                                variant="ghost"
+                            >
+                                <CopyIcon />
+                            </IconButton>
+                        </Flex>
+                    </DataList.Value>
+                    <DataList.Item>
+                        <DataList.Label minWidth="88px">Kernel</DataList.Label>
+                        <DataList.Value>{node.spec!.kernel}</DataList.Value>
+                    </DataList.Item>
+                </DataList.Item>
+            </DataList.Root>
+            <Separator size="4" mt="3" mb="3" />
+            <DataList.Root>
+                <DataList.Item>
+                    <DataList.Label minWidth="88px">Cores</DataList.Label>
+                    <DataList.Value>{node.spec!.topology.cores}</DataList.Value>
+                </DataList.Item>
+                <DataList.Item>
+                    <DataList.Label minWidth="88px">Threads</DataList.Label>
+                    <DataList.Value>
+                        {node.spec!.topology.threads}
+                    </DataList.Value>
+                </DataList.Item>
+                <DataList.Item>
+                    <DataList.Label minWidth="88px">Sockets</DataList.Label>
+                    <DataList.Value>
+                        {node.spec!.topology.sockets}
+                    </DataList.Value>
+                </DataList.Item>
+                <DataList.Item>
+                    <DataList.Label minWidth="88px">Memory</DataList.Label>
+                    <DataList.Value>
+                        <Badge color="green">
+                            {Math.round(
+                                convert(
+                                    node.spec!.topology.memory!,
+                                    Units.Bytes,
+                                    Units.Gigabyte,
+                                ),
+                            )}{" "}
+                            Gb
+                        </Badge>
+                    </DataList.Value>
+                </DataList.Item>
+            </DataList.Root>
+            <Separator size="4" mt="3" mb="3" />
+            <DataList.Root>
+                <DataList.Item>
+                    <DataList.Label minWidth="88px">Last reboot</DataList.Label>
+                    <DataList.Value>
+                        <Text color="purple">
+                            {new Date(node.spec!.up_since).toLocaleString()}
+                        </Text>
+                    </DataList.Value>
+                </DataList.Item>
+            </DataList.Root>
+        </Card>
+    );
+};
+
+export const NodeView: React.FC<unknown> = () => {
     const { id } = useParams<{ id: string }>();
     const data = useQuery({
         queryKey: ["nodes", id],
         queryFn: () => getNode(id!),
     });
+
+    // TODO: This whole setup causes a full page reload?
+    const tabKey = `${id}/tab`;
+    const [tab, setTab] = useState<string>(() => {
+        return localStorage.getItem(tabKey) || "overview";
+    });
+
+    useEffect(() => {
+        localStorage.setItem(tabKey, tab);
+    }, [tab, tabKey]);
 
     if (data.isLoading && !data.isError) {
         return <Text>Loading...</Text>;
@@ -29,16 +131,31 @@ export const NodeView: React.FC<{}> = () => {
 
     return (
         <Box p="9">
-            <Text size="8">{data.data?.list[0].spec?.hostname}</Text>
+            <Text size="8">{data.data?.spec?.hostname}</Text>
             <Box pt="3">
-                <Tabs.Root defaultValue="overview">
+                <Tabs.Root defaultValue={tab}>
                     <Tabs.List>
-                        <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-                        <Tabs.Trigger value="vms">
+                        <Tabs.Trigger
+                            value="overview"
+                            onClick={() => setTab("overview")}
+                        >
+                            Overview
+                        </Tabs.Trigger>
+                        <Tabs.Trigger value="vms" onClick={() => setTab("vms")}>
                             Virtual Machines
                         </Tabs.Trigger>
-                        <Tabs.Trigger value="pools">Storage Pools</Tabs.Trigger>
-                        <Tabs.Trigger value="networks">Networks</Tabs.Trigger>
+                        <Tabs.Trigger
+                            value="pools"
+                            onClick={() => setTab("pools")}
+                        >
+                            Storage Pools
+                        </Tabs.Trigger>
+                        <Tabs.Trigger
+                            value="networks"
+                            onClick={() => setTab("networks")}
+                        >
+                            Networks
+                        </Tabs.Trigger>
                     </Tabs.List>
 
                     <Box pt="3">
@@ -48,85 +165,7 @@ export const NodeView: React.FC<{}> = () => {
                                     <Card size="2"></Card>
                                 </Box>
                                 <Box gridColumnStart="3">
-                                    <Card size="2">
-                                        <Box>
-                                            <Box>
-                                                <Text size="2" color="gray">
-                                                    Uptime
-                                                </Text>
-                                            </Box>
-                                            <Text>24 hours</Text>
-                                        </Box>
-                                        <Separator size="4" mt="2" mb="2" />
-                                        <Box>
-                                            <Box>
-                                                <Text size="2" color="gray">
-                                                    Network
-                                                </Text>
-                                            </Box>
-                                            <Text>10.100.0.101</Text>
-                                        </Box>
-                                        <Separator size="4" mt="2" mb="2" />
-                                        <Box>
-                                            <Box>
-                                                <Text size="2" color="gray">
-                                                    Kernel
-                                                </Text>
-                                            </Box>
-                                            <Text>
-                                                {
-                                                    data.data?.list[0].spec!
-                                                        .kernel
-                                                }
-                                            </Text>
-                                        </Box>
-                                        <Separator size="4" mt="2" mb="2" />
-                                        <Box>
-                                            <AlertDialog.Root>
-                                                <AlertDialog.Trigger>
-                                                    <Button
-                                                        variant="solid"
-                                                        color="red"
-                                                    >
-                                                        Reboot
-                                                    </Button>
-                                                </AlertDialog.Trigger>
-                                                <AlertDialog.Content maxWidth="450px">
-                                                    <AlertDialog.Title>
-                                                        Reboot
-                                                    </AlertDialog.Title>
-                                                    <AlertDialog.Description size="2">
-                                                        Are you sure? This node
-                                                        will be rebooted and all
-                                                        workloads paused
-                                                    </AlertDialog.Description>
-
-                                                    <Flex
-                                                        gap="3"
-                                                        mt="4"
-                                                        justify="end"
-                                                    >
-                                                        <AlertDialog.Cancel>
-                                                            <Button
-                                                                variant="soft"
-                                                                color="gray"
-                                                            >
-                                                                Cancel
-                                                            </Button>
-                                                        </AlertDialog.Cancel>
-                                                        <AlertDialog.Action>
-                                                            <Button
-                                                                variant="solid"
-                                                                color="red"
-                                                            >
-                                                                Reboot
-                                                            </Button>
-                                                        </AlertDialog.Action>
-                                                    </Flex>
-                                                </AlertDialog.Content>
-                                            </AlertDialog.Root>
-                                        </Box>
-                                    </Card>
+                                    <NodeMetadata node={data.data!} />
                                 </Box>
                             </Grid>
                         </Tabs.Content>
